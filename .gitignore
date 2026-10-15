@@ -10,10 +10,12 @@ env/
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Database
-backend/data/
 *.db
+*.sqlite3
+!backend/data/.gitkeep
 
 # IDE
 .vscode/
