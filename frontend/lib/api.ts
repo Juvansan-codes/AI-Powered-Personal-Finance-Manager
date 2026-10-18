@@ -8,6 +8,8 @@ import type {
   Insight,
   Budget,
   CategorizeResult,
+  TranscriptionResponse,
+  VoiceExtractResponse,
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
@@ -49,5 +51,34 @@ export const api = {
     fetchJSON<CategorizeResult>("/api/categorize/", {
       method: "POST",
       body: JSON.stringify({ description, transaction_type: type }),
+    }),
+
+  // Voice-Powered Transactions
+  transcribeAudio: async (audioBlob: Blob): Promise<TranscriptionResponse> => {
+    const formData = new FormData();
+    const ext = audioBlob.type.includes("wav") ? "wav" : "webm";
+    formData.append("file", audioBlob, `recording.${ext}`);
+
+    const res = await fetch(`${API_BASE}/api/voice/transcribe`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      let errorMsg = `Error ${res.status}`;
+      try {
+        const errJson = await res.json();
+        errorMsg = errJson.detail || errorMsg;
+      } catch {
+        errorMsg = await res.text() || errorMsg;
+      }
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  extractVoice: (text: string, currentDate?: string) =>
+    fetchJSON<VoiceExtractResponse>("/api/voice/extract", {
+      method: "POST",
+      body: JSON.stringify({ text, current_date: currentDate }),
     }),
 };

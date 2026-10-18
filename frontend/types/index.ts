@@ -57,3 +57,25 @@ export interface CategorizeResult {
   method: string;
   is_suggestion: boolean;
 }
+
+export interface TranscriptionResponse {
+  text: string;
+  filename?: string;
+}
+
+export interface TransactionDraft {
+  description?: string;
+  amount?: number;
+  type?: "income" | "expense";
+  category?: string;
+  date?: string;
+  confidence?: string;
+}
+
+export interface VoiceExtractResponse {
+  is_complete: boolean;
+  missing_fields: string[];
+  clarification_needed?: string;
+  draft?: TransactionDraft;
+  raw_text: string;
+}

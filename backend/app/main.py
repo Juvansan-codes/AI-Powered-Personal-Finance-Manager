@@ -15,6 +15,7 @@ from app.api.transactions import router as transactions_router
 from app.api.analytics import router as analytics_router
 from app.api.categorizer import router as categorizer_router
 from app.api.budgets import router as budgets_router
+from app.api.voice import router as voice_router
 
 load_dotenv()
 
@@ -58,3 +59,4 @@ app.include_router(transactions_router, prefix="/api/transactions", tags=["Trans
 app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(categorizer_router, prefix="/api/categorize", tags=["AI Categorizer"])
 app.include_router(budgets_router, prefix="/api/budgets", tags=["Budgets"])
+app.include_router(voice_router, prefix="/api/voice", tags=["Voice"])

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, CalendarDays, RefreshCw } from "lucide-react";
+import { Plus, CalendarDays, RefreshCw, Mic } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import SummaryCards from "@/components/SummaryCards";
 import SpendingCharts from "@/components/SpendingCharts";
@@ -29,6 +29,7 @@ const PAGE_TITLES: Record<string, string> = {
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState("overview");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [startWithVoice, setStartWithVoice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -120,7 +121,21 @@ export default function Dashboard() {
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setShowAddDialog(true)}
+                onClick={() => {
+                  setStartWithVoice(true);
+                  setShowAddDialog(true);
+                }}
+                className="flex items-center gap-2 px-3.5 py-2 border border-accent/30 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-sm font-medium transition-colors"
+                title="Speak to add transaction"
+              >
+                <Mic className="w-4 h-4" />
+                <span>Voice Entry</span>
+              </button>
+              <button
+                onClick={() => {
+                  setStartWithVoice(false);
+                  setShowAddDialog(true);
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
@@ -192,8 +207,12 @@ export default function Dashboard() {
       {/* Add Transaction Dialog */}
       <AddTransactionDialog
         open={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
+        onClose={() => {
+          setShowAddDialog(false);
+          setStartWithVoice(false);
+        }}
         onAdded={fetchAll}
+        startWithVoice={startWithVoice}
       />
     </div>
   );
