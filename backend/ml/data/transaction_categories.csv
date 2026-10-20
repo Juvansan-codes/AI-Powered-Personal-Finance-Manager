@@ -1,0 +1,246 @@
+description,category,transaction_type
+Ordered dinner from Swiggy,Food,expense
+Zomato pizza delivery,Food,expense
+Lunch at college canteen,Food,expense
+Bought vegetables from market,Food,expense
+Grocery shopping at BigBasket,Food,expense
+Coffee at Starbucks,Food,expense
+Biryani takeaway for dinner,Food,expense
+Breakfast at mess,Food,expense
+Snacks from the vending machine,Food,expense
+Ice cream with friends,Food,expense
+Tea and biscuits from canteen,Food,expense
+Rice and dal combo meal,Food,expense
+Chicken curry from restaurant,Food,expense
+Egg roll from street vendor,Food,expense
+Bakery items for birthday,Food,expense
+Fruits from supermarket,Food,expense
+Milk and bread daily purchase,Food,expense
+Juice bar fresh fruit smoothie,Food,expense
+Tiffin service monthly payment,Food,expense
+Fish fry at seafood restaurant,Food,expense
+Mutton biryani from Paradise,Food,expense
+Dosa and idli at South Indian restaurant,Food,expense
+Weekly grocery run at Reliance Fresh,Food,expense
+Monthly provisions from DMart,Food,expense
+Chocolate and snacks at convenience store,Food,expense
+Paneer tikka from dhaba,Food,expense
+Samosa and chai from roadside stall,Food,expense
+Cake order for celebration,Food,expense
+Maggi and cold drink at hostel,Food,expense
+Protein shake and supplements,Food,expense
+Uber cab to college campus,Transportation,expense
+Ola ride to railway station,Transportation,expense
+Auto rickshaw to hospital,Transportation,expense
+Bus ticket to Coimbatore,Transportation,expense
+Train fare to Chennai,Transportation,expense
+Metro card recharge,Transportation,expense
+Rapido bike ride to market,Transportation,expense
+Petrol fill at Indian Oil,Transportation,expense
+Parking charges at mall,Transportation,expense
+Toll charges on highway,Transportation,expense
+Flight ticket to Bangalore,Transportation,expense
+Bus pass monthly renewal,Transportation,expense
+Diesel for car tank,Transportation,expense
+Cab fare to airport terminal,Transportation,expense
+Auto fare to college,Transportation,expense
+Bike service and fuel,Transportation,expense
+Cab from office to home,Transportation,expense
+InDrive ride to shopping complex,Transportation,expense
+Local train monthly pass,Transportation,expense
+Ola share ride to tech park,Transportation,expense
+Uber auto to bus stand,Transportation,expense
+Bus fare from hostel to campus,Transportation,expense
+Taxi to wedding venue,Transportation,expense
+Two wheeler parking fees,Transportation,expense
+Travel to nearby city by bus,Transportation,expense
+Commute expenses for the week,Transportation,expense
+Amazon order for headphones,Shopping,expense
+Flipkart purchase of shoes,Shopping,expense
+Myntra clothing order,Shopping,expense
+New phone case from online store,Shopping,expense
+Laptop accessories from Amazon,Shopping,expense
+Gift for friend birthday,Shopping,expense
+Watch purchase from Titan,Shopping,expense
+Bag from Wildcraft,Shopping,expense
+Earbuds from electronics shop,Shopping,expense
+Kitchen appliance from Amazon,Shopping,expense
+Clothes shopping at mall,Shopping,expense
+Shoes from Nike outlet,Shopping,expense
+Gadget purchase from Croma,Shopping,expense
+Home decor items from IKEA,Shopping,expense
+Sunglasses order from Lenskart,Shopping,expense
+Beauty products from Nykaa,Shopping,expense
+Sports equipment from Decathlon,Shopping,expense
+Stationery and supplies from Amazon,Shopping,expense
+New backpack for college,Shopping,expense
+Wallet purchase from leather store,Shopping,expense
+T-shirt order from Bewakoof,Shopping,expense
+Perfume from online store,Shopping,expense
+Furniture from Pepperfry,Shopping,expense
+Curtains and bedsheet from HomeTown,Shopping,expense
+Charger cable from local electronics,Shopping,expense
+Power bank purchase,Shopping,expense
+Textbooks for AI course,Education,expense
+College semester tuition fees,Education,expense
+Udemy online course subscription,Education,expense
+Coursera specialization payment,Education,expense
+Stationery and notebooks,Education,expense
+Library membership renewal,Education,expense
+Exam registration fee,Education,expense
+Programming textbook from store,Education,expense
+Study materials printing,Education,expense
+Workshop registration fees,Education,expense
+Pen and pencil set for exams,Education,expense
+Reference books from Amazon,Education,expense
+Online certification exam fee,Education,expense
+School annual fees payment,Education,expense
+Computer science textbook purchase,Education,expense
+Coaching class monthly fee,Education,expense
+Lab manual and practical notebook,Education,expense
+Test series subscription for entrance,Education,expense
+Competitive exam preparation books,Education,expense
+Educational app subscription,Education,expense
+Art supplies for design course,Education,expense
+Language learning app premium,Education,expense
+University convocation fee,Education,expense
+Research paper publication fee,Education,expense
+Conference registration academic,Education,expense
+Doctor consultation fee,Healthcare,expense
+Pharmacy medicines purchase,Healthcare,expense
+Medical checkup at hospital,Healthcare,expense
+Dental cleaning appointment,Healthcare,expense
+Eye checkup at optical store,Healthcare,expense
+Health insurance premium,Healthcare,expense
+Lab test blood work,Healthcare,expense
+CT scan at diagnostic center,Healthcare,expense
+Physiotherapy session,Healthcare,expense
+Apollo pharmacy medicines,Healthcare,expense
+Clinic visit for fever,Healthcare,expense
+Vaccination charges,Healthcare,expense
+First aid supplies purchase,Healthcare,expense
+Dermatologist consultation,Healthcare,expense
+Mental health counseling session,Healthcare,expense
+Spectacles from optical shop,Healthcare,expense
+Health supplement vitamins,Healthcare,expense
+X-ray at radiology center,Healthcare,expense
+Ambulance service charges,Healthcare,expense
+Regular health checkup package,Healthcare,expense
+Orthopedic consultation fee,Healthcare,expense
+Ayurvedic treatment session,Healthcare,expense
+Diagnostic lab full body checkup,Healthcare,expense
+Electricity bill payment,Utilities,expense
+Water bill monthly payment,Utilities,expense
+Gas cylinder refill charges,Utilities,expense
+Internet broadband bill,Utilities,expense
+Mobile recharge prepaid plan,Utilities,expense
+WiFi monthly subscription,Utilities,expense
+Phone bill postpaid payment,Utilities,expense
+Maintenance charges for flat,Utilities,expense
+Society maintenance monthly,Utilities,expense
+Laundry and dry cleaning,Utilities,expense
+DTH television recharge,Utilities,expense
+Cooking gas pipeline bill,Utilities,expense
+Water purifier service charges,Utilities,expense
+Sewage and sanitation fees,Utilities,expense
+Newspaper delivery subscription,Utilities,expense
+Garbage collection monthly fee,Utilities,expense
+AC servicing and maintenance,Utilities,expense
+Plumber repair charges,Utilities,expense
+Electrician visit fee,Utilities,expense
+Home cleaning service payment,Utilities,expense
+Pest control service,Utilities,expense
+Inverter battery replacement,Utilities,expense
+Netflix monthly subscription,Entertainment,expense
+Spotify premium music plan,Entertainment,expense
+Movie tickets at PVR cinema,Entertainment,expense
+Amazon Prime annual subscription,Entertainment,expense
+Disney Hotstar subscription,Entertainment,expense
+Concert ticket purchase,Entertainment,expense
+Gaming top up purchase,Entertainment,expense
+Weekend trip to hill station,Entertainment,expense
+Park entry tickets,Entertainment,expense
+Birthday party expenses,Entertainment,expense
+Pub outing with friends,Entertainment,expense
+Bowling alley gaming session,Entertainment,expense
+Amusement park day out,Entertainment,expense
+Board game purchase for game night,Entertainment,expense
+Museum and gallery visit tickets,Entertainment,expense
+Streaming service annual plan,Entertainment,expense
+Sports match ticket booking,Entertainment,expense
+Comedy show ticket purchase,Entertainment,expense
+Holiday vacation travel expenses,Entertainment,expense
+Water park weekend fun,Entertainment,expense
+Escape room adventure booking,Entertainment,expense
+Go karting session,Entertainment,expense
+Theatre play tickets,Entertainment,expense
+Monthly house rent payment,Rent,expense
+Hostel accommodation fees,Rent,expense
+PG room monthly charges,Rent,expense
+Flat rent and deposit,Rent,expense
+Room rent for the month,Rent,expense
+Apartment lease monthly,Rent,expense
+Housing rent transfer,Rent,expense
+Accommodation charges college hostel,Rent,expense
+Co-living space monthly rent,Rent,expense
+Guest house stay charges,Rent,expense
+Shared apartment rent payment,Rent,expense
+Studio apartment monthly rent,Rent,expense
+Dormitory accommodation payment,Rent,expense
+Sublease room monthly charges,Rent,expense
+Security deposit for new flat,Rent,expense
+Rental advance for apartment,Rent,expense
+Monthly salary credited,Salary,income
+Salary transfer from company,Salary,income
+Monthly paycheck deposit,Salary,income
+Stipend from internship,Salary,income
+Wages for part time work,Salary,income
+Monthly pay from employer,Salary,income
+Contract salary payment,Salary,income
+Teaching assistant stipend,Salary,income
+Campus placement joining bonus,Salary,income
+Part time job weekly wages,Salary,income
+Work from home salary,Salary,income
+First month salary credited,Salary,income
+Performance bonus from company,Salary,income
+Holiday pay extra wages,Salary,income
+Overtime payment from employer,Salary,income
+Probation period salary,Salary,income
+Apprenticeship monthly stipend,Salary,income
+Freelance web project payment,Other Income,income
+Cashback reward from Paytm,Other Income,income
+Interest earned on savings,Other Income,income
+Dividend from stock investment,Other Income,income
+Refund from cancelled order,Other Income,income
+Side income from tutoring,Other Income,income
+Gift money received from relatives,Other Income,income
+Pocket money from parents,Other Income,income
+Allowance received monthly,Other Income,income
+Bonus reward from app,Other Income,income
+Freelance design project payment,Other Income,income
+YouTube channel ad revenue,Other Income,income
+Blog monetization income,Other Income,income
+Photography gig payment,Other Income,income
+Content writing freelance earnings,Other Income,income
+Investment returns credited,Other Income,income
+Survey and review reward money,Other Income,income
+Resale profit from used items,Other Income,income
+Prize money from competition,Other Income,income
+Referral bonus from app,Other Income,income
+Scholarship amount credited,Other Income,income
+Donation received for event,Other Income,income
+ATM cash withdrawal,Other,expense
+Bank transfer miscellaneous,Other,expense
+Unknown online payment,Other,expense
+General expenses,Other,expense
+Miscellaneous purchase,Other,expense
+Personal expense not categorized,Other,expense
+Random online transaction,Other,expense
+Cash payment to friend,Other,expense
+Subscription unknown service,Other,expense
+Donation to charity,Other,expense
+Fine or penalty payment,Other,expense
+Lost wallet cash,Other,expense
+Emergency miscellaneous expense,Other,expense
+Untracked daily expenses,Other,expense
+Small sundry purchases,Other,expense

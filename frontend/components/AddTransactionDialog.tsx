@@ -58,7 +58,9 @@ export default function AddTransactionDialog({
   const [suggesting, setSuggesting] = useState(false);
   const [suggestion, setSuggestion] = useState<{
     category: string;
-    confidence: string;
+    confidence: string | number;
+    method: string;
+    requires_review: boolean;
   } | null>(null);
 
   // Voice recording state
@@ -126,8 +128,12 @@ export default function AddTransactionDialog({
         setSuggestion({
           category: result.category,
           confidence: result.confidence,
+          method: result.method,
+          requires_review: result.requires_review ?? false,
         });
-        if (result.confidence !== "low" && !category) {
+        // Auto-apply if not low confidence and no category selected yet
+        const isLow = result.confidence === "low" || (typeof result.confidence === "number" && result.confidence < 0.5);
+        if (!isLow && !category) {
           setCategory(result.category);
         }
       } catch {
@@ -622,19 +628,39 @@ export default function AddTransactionDialog({
                 </div>
               )}
               {suggestion && !suggesting && (
-                <button
-                  type="button"
-                  onClick={() => setCategory(suggestion.category)}
-                  className="flex items-center gap-1.5 mt-1.5 text-xs text-accent hover:text-accent-dark transition-colors"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>
-                    Suggested Category: <strong>{suggestion.category}</strong>{" "}
-                    <span className="text-muted-foreground">
-                      ({suggestion.confidence} confidence)
+                <div className="mt-1.5 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setCategory(suggestion.category)}
+                    className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-dark transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>
+                      Suggested: <strong>{suggestion.category}</strong>{" "}
+                      <span className="text-muted-foreground">
+                        ({typeof suggestion.confidence === "number"
+                          ? `${Math.round(suggestion.confidence * 100)}%`
+                          : suggestion.confidence}{" "}
+                        confidence)
+                      </span>
                     </span>
-                  </span>
-                </button>
+                    <span
+                      className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${
+                        suggestion.method === "ml"
+                          ? "bg-accent/10 text-accent border border-accent/20"
+                          : "bg-muted text-muted-foreground border border-border"
+                      }`}
+                    >
+                      {suggestion.method === "ml" ? "ML" : "Rules"}
+                    </span>
+                  </button>
+                  {suggestion.requires_review && (
+                    <p className="text-[11px] text-amber-600 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Low confidence — please verify the suggested category
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 

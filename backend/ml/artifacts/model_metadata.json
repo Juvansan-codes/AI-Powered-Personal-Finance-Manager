@@ -1,0 +1,131 @@
+{
+  "model_version": "1.0.0",
+  "trained_at": "2026-10-20T12:17:08.980263Z",
+  "random_seed": 42,
+  "dataset_path": "transaction_categories.csv",
+  "dataset_size": 245,
+  "train_size": 196,
+  "test_size": 49,
+  "split_method": "StratifiedShuffleSplit (80/20)",
+  "categories": [
+    "Education",
+    "Entertainment",
+    "Food",
+    "Healthcare",
+    "Other",
+    "Other Income",
+    "Rent",
+    "Salary",
+    "Shopping",
+    "Transportation",
+    "Utilities"
+  ],
+  "num_categories": 11,
+  "pipeline_steps": [
+    "TfidfVectorizer(ngram_range=(1,2))",
+    "LogisticRegression(multinomial)"
+  ],
+  "metrics": {
+    "accuracy": 0.5102,
+    "macro_f1": 0.4975,
+    "weighted_f1": 0.5033
+  },
+  "confidence_threshold": 0.3,
+  "per_category_report": {
+    "Education": {
+      "precision": 0.5,
+      "recall": 0.4,
+      "f1-score": 0.4444444444444444,
+      "support": 5.0
+    },
+    "Entertainment": {
+      "precision": 0.5,
+      "recall": 0.4,
+      "f1-score": 0.4444444444444444,
+      "support": 5.0
+    },
+    "Food": {
+      "precision": 0.3,
+      "recall": 0.5,
+      "f1-score": 0.375,
+      "support": 6.0
+    },
+    "Healthcare": {
+      "precision": 0.6666666666666666,
+      "recall": 0.4,
+      "f1-score": 0.5,
+      "support": 5.0
+    },
+    "Other": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Other Income": {
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1-score": 0.75,
+      "support": 5.0
+    },
+    "Rent": {
+      "precision": 1.0,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.5,
+      "support": 3.0
+    },
+    "Salary": {
+      "precision": 0.75,
+      "recall": 1.0,
+      "f1-score": 0.8571428571428571,
+      "support": 3.0
+    },
+    "Shopping": {
+      "precision": 0.4444444444444444,
+      "recall": 0.8,
+      "f1-score": 0.5714285714285714,
+      "support": 5.0
+    },
+    "Transportation": {
+      "precision": 0.75,
+      "recall": 0.6,
+      "f1-score": 0.6666666666666666,
+      "support": 5.0
+    },
+    "Utilities": {
+      "precision": 0.2857142857142857,
+      "recall": 0.5,
+      "f1-score": 0.36363636363636365,
+      "support": 4.0
+    },
+    "macro avg": {
+      "precision": 0.5633477633477634,
+      "recall": 0.503030303030303,
+      "f1-score": 0.49752394070575884,
+      "support": 49.0
+    },
+    "weighted avg": {
+      "precision": 0.5611920958859734,
+      "recall": 0.5102040816326531,
+      "f1-score": 0.5032835645080542,
+      "support": 49.0
+    }
+  },
+  "poor_categories": [
+    "Education",
+    "Entertainment",
+    "Food",
+    "Healthcare",
+    "Other",
+    "Rent",
+    "Shopping",
+    "Transportation",
+    "Utilities"
+  ],
+  "limitations": [
+    "Trained on synthetic/curated data, not real financial transactions.",
+    "Small dataset (~300 samples) \u2014 this is a prototype, not production-grade.",
+    "May not generalize well to unseen merchant names or phrasing styles.",
+    "Confidence scores are model probabilities, not calibrated probabilities of correctness."
+  ]
+}

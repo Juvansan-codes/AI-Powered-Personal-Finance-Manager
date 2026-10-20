@@ -5,7 +5,7 @@
 > **Institution:** Karunya Institute of Technology and Sciences  
 > **Course Faculty:** Dr. Evangelin Sonia S V  
 > **Team Members:** Juvansan H, Abishek Joseph E, Karol Benjamin M D, P Joel Sathiyan  
-> **Current Milestone:** Milestone 2 — Voice-Powered Transactions & Groq AI Extraction  
+> **Current Milestone:** Milestone 3 — ML-Powered Transaction Categorization (TF-IDF + Logistic Regression)  
 
 ---
 
@@ -197,6 +197,36 @@ npm run build
 
 ---
 
+## 5. Machine Learning Categorization (Milestone 3)
+
+FinanceFlow features a genuine, reproducible machine learning classifier for automatic transaction categorization:
+
+### ML Pipeline Architecture
+- **Vectorization:** TF-IDF with word-level unigrams and bigrams (`ngram_range=(1, 2)`), sublinear term frequency scaling (`sublinear_tf=True`).
+- **Classification:** L2-regularized Logistic Regression (`solver="lbfgs"`, `C=2.0`).
+- **Confidence Scoring & Hybrid Fallback:** The model computes class probability distributions via `predict_proba()`. If the confidence is below the validation-calibrated threshold (0.30), the system evaluates the rule-based categorizer and prompts the user for review.
+- **Human-in-the-Loop:** Suggestions display method badges (`ML` or `Rule-Based`) and numeric confidence scores. Users retain full control to override suggestions.
+
+### ML CLI Commands
+From the `backend/` directory:
+
+```bash
+# Train the model and export artifacts (joblib + metadata JSON)
+python -m ml.train_model
+
+# Evaluate the model on held-out test data and compare against rule-based
+python -m ml.evaluate_model
+
+# Run the complete test suite (29 tests)
+python -m pytest tests
+```
+
+### ML API Endpoints
+- `POST /api/categorize/`: Predicts category for `{ "description": "...", "transaction_type": "expense" }`. Returns `{ "category": "...", "confidence": 0.85, "method": "ml", "is_suggestion": true, "requires_review": false }`.
+- `GET /api/categorize/model-info`: Returns model status, version, categories, and metrics.
+
+---
+
 ## 6. Completed Milestones
 
 | Feature | Milestone | Status | Details |
@@ -212,13 +242,17 @@ npm run build
 | **Groq LLM Entity Extraction**| M2 | Completed | Structured NLP extraction (`POST /api/voice/extract`) with relative dates |
 | **Voice Entry UI & Audio Recorder** | M2 | Completed | In-browser MediaRecorder with audio waveform and timer |
 | **Human-in-the-Loop Review** | M2 | Completed | Draft preview with clarification banners and explicit user confirmation |
-| **Comprehensive Test Suite** | M2 | Completed | 23 passing tests (unit, integration, mocking, immutability) |
-| **Production Build Verified** | M2 | Completed | Next.js 16 TypeScript compile and production build passing |
+| **TF-IDF + LogReg ML Model** | M3 | Completed | Reproducible training on 245-sample curated dataset across 11 classes |
+| **Empirical Evaluation Pipeline**| M3 | Completed | Held-out stratified evaluation with confusion matrix & rule-based comparison |
+| **Hybrid Fallback Service** | M3 | Completed | Confidence-aware routing between ML, rule heuristics, and user review |
+| **ML UI Suggestions & Badges** | M3 | Completed | Category suggestion badges with numeric confidence scores and review prompts |
+| **Comprehensive Test Suite** | M3 | Completed | 29 passing automated tests (API, ML categorizer, Voice extraction) |
 
 ---
 
-## 7. Next Steps (Milestone 3 Roadmap)
+## 7. Next Steps (Milestone 4 Roadmap)
 
-1. **Trained ML Categorizer:** Train a TF-IDF + Logistic Regression model on a labeled transaction dataset to replace the rule-based baseline.
-2. **Supabase PostgreSQL & Auth:** Migrate SQLite schema to Supabase with user authentication and Row Level Security.
-3. **Conversational Financial Assistant:** Implement a tool-calling AI agent using Groq LLM to query financial summaries and run what-if simulations.
+1. **Supabase PostgreSQL & Auth:** Migrate SQLite schema to Supabase with user authentication and Row Level Security.
+2. **Conversational Financial Assistant:** Implement a tool-calling AI agent using Groq LLM to query financial summaries and run what-if simulations.
+3. **Continuous ML Feedback Loop:** Record user category corrections locally to incrementally update classification weights.
+

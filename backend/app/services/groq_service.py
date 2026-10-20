@@ -6,7 +6,8 @@ from datetime import datetime, date
 from typing import Optional
 from dotenv import load_dotenv
 
-from app.ai.categorizer import CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES, categorize_transaction
+from app.ai.categorizer import CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES
+from app.services.ml_categorizer import categorize_with_ml
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -187,7 +188,7 @@ Respond STRICTLY in valid JSON with this exact schema:
             raise GroqConfigError("Invalid GROQ_API_KEY configured.")
         logger.error(f"Groq LLM extraction error: {type(e).__name__}")
         # Graceful fallback: return incomplete draft with rule-based categorization
-        rule_cat = categorize_transaction(clean_text)
+        rule_cat = categorize_with_ml(clean_text)
         return {
             "is_complete": False,
             "missing_fields": ["amount"],
@@ -229,7 +230,7 @@ Respond STRICTLY in valid JSON with this exact schema:
     allowed_categories = INCOME_CATEGORIES if txn_type == "income" else EXPENSE_CATEGORIES
     if not cat or cat not in allowed_categories:
         # Use our rule-based categorizer as fallback/enhancement
-        suggested = categorize_transaction(desc, txn_type)
+        suggested = categorize_with_ml(desc, txn_type)
         cat = suggested["category"]
 
     date_val = data.get("date")
