@@ -16,6 +16,7 @@ from app.api.analytics import router as analytics_router
 from app.api.categorizer import router as categorizer_router
 from app.api.budgets import router as budgets_router
 from app.api.voice import router as voice_router
+from app.services.ml_categorizer import load_ml_model
 
 load_dotenv()
 
@@ -24,11 +25,20 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the database and seed sample data on startup."""
+    """Initialize database and load ML model on startup."""
     init_db()
-    seeded = seed_if_empty()
-    if seeded:
-        logger.info("Database seeded with sample transactions.")
+    seed_if_empty()
+    from app.db.supabase import is_supabase_ready
+    if is_supabase_ready():
+        logger.info("Supabase PostgreSQL connected and active for transactions & budgets.")
+    else:
+        logger.info("Using local SQLite database.")
+    # Load the ML categorization model (non-blocking — falls back to rule-based if unavailable)
+    ml_loaded = load_ml_model()
+    if ml_loaded:
+        logger.info("ML transaction categorizer loaded successfully.")
+    else:
+        logger.warning("ML model not available — using rule-based categorizer as fallback.")
     yield
 
 

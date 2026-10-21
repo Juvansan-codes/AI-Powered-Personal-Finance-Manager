@@ -53,9 +53,10 @@ export interface Budget {
 
 export interface CategorizeResult {
   category: string;
-  confidence: string;
+  confidence: string | number;
   method: string;
   is_suggestion: boolean;
+  requires_review?: boolean;
 }
 
 export interface TranscriptionResponse {
