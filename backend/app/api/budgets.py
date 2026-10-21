@@ -1,6 +1,7 @@
-"""Budget API routes."""
+"""Budget API routes — Supports Supabase with SQLite fallback."""
 from fastapi import APIRouter
 from app.db.database import get_connection
+from app.db.supabase import is_supabase_ready, supabase_get_budgets
 
 router = APIRouter()
 
@@ -8,8 +9,10 @@ router = APIRouter()
 @router.get("/")
 def get_budgets():
     """Get all budgets with current spending calculated from transactions."""
-    conn = get_connection()
+    if is_supabase_ready():
+        return supabase_get_budgets()
 
+    conn = get_connection()
     budgets = conn.execute("SELECT * FROM budgets").fetchall()
 
     # Get current month's spending per category
@@ -29,7 +32,7 @@ def get_budgets():
         spent = spending_map.get(b["category"], 0)
         limit = b["budget_limit"]
         result.append({
-            "id": b["id"],
+            "id": str(b["id"]),
             "category": b["category"],
             "budget_limit": limit,
             "spent": round(spent, 2),

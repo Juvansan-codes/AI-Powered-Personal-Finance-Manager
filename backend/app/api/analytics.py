@@ -1,6 +1,13 @@
-"""Analytics API routes — computed from transaction data."""
+"""Analytics API routes — Supports Supabase with SQLite fallback."""
 from fastapi import APIRouter
 from app.db.database import get_connection
+from app.db.supabase import (
+    is_supabase_ready,
+    supabase_get_summary,
+    supabase_get_category_spending,
+    supabase_get_monthly_trend,
+    supabase_get_insights,
+)
 
 router = APIRouter()
 
@@ -8,6 +15,9 @@ router = APIRouter()
 @router.get("/summary")
 def get_summary():
     """Financial summary: total income, expenses, balance, savings rate."""
+    if is_supabase_ready():
+        return supabase_get_summary()
+
     conn = get_connection()
     row = conn.execute("""
         SELECT
@@ -33,6 +43,9 @@ def get_summary():
 @router.get("/category-spending")
 def get_category_spending():
     """Spending breakdown by category."""
+    if is_supabase_ready():
+        return supabase_get_category_spending()
+
     conn = get_connection()
     rows = conn.execute("""
         SELECT category, SUM(amount) as total
@@ -48,6 +61,9 @@ def get_category_spending():
 @router.get("/monthly-trend")
 def get_monthly_trend():
     """Monthly income vs expense trend."""
+    if is_supabase_ready():
+        return supabase_get_monthly_trend()
+
     conn = get_connection()
     rows = conn.execute("""
         SELECT
@@ -72,6 +88,9 @@ def get_monthly_trend():
 @router.get("/insights")
 def get_insights():
     """AI-style insights derived from actual transaction data."""
+    if is_supabase_ready():
+        return supabase_get_insights()
+
     conn = get_connection()
 
     # Summary

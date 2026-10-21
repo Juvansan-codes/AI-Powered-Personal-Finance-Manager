@@ -1,11 +1,17 @@
-"""Transaction API routes."""
+"""Transaction API routes — Supports Supabase with SQLite fallback."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db.database import get_connection
+from app.db.supabase import (
+    is_supabase_ready,
+    supabase_list_transactions,
+    supabase_create_transaction,
+    supabase_delete_transaction,
+)
 from app.schemas.transaction import TransactionCreate, TransactionResponse
 
 router = APIRouter()
@@ -19,6 +25,27 @@ def list_transactions(
     category: Optional[str] = None,
 ):
     """List transactions with optional filtering."""
+    if is_supabase_ready():
+        rows = supabase_list_transactions(
+            limit=limit,
+            offset=offset,
+            type_filter=type,
+            category_filter=category,
+        )
+        return [
+            TransactionResponse(
+                id=str(r["id"]),
+                description=r["description"],
+                amount=float(r["amount"]),
+                type=r["type"],
+                category=r["category"],
+                date=str(r["date"]),
+                created_at=str(r.get("created_at", "")),
+                is_sample=bool(r.get("is_sample", 0)),
+            )
+            for r in rows
+        ]
+
     conn = get_connection()
     query = "SELECT * FROM transactions WHERE 1=1"
     params: list = []
@@ -54,7 +81,30 @@ def list_transactions(
 def create_transaction(txn: TransactionCreate):
     """Create a new transaction."""
     txn_id = str(uuid.uuid4())
-    created_at = datetime.utcnow().isoformat()
+    created_at = datetime.now(timezone.utc).isoformat()
+
+    if is_supabase_ready():
+        record = supabase_create_transaction({
+            "id": txn_id,
+            "description": txn.description,
+            "amount": txn.amount,
+            "type": txn.type,
+            "category": txn.category,
+            "date": txn.date,
+            "created_at": created_at,
+            "is_sample": 0,
+        })
+        return TransactionResponse(
+            id=str(record.get("id", txn_id)),
+            description=record["description"],
+            amount=float(record["amount"]),
+            type=record["type"],
+            category=record["category"],
+            date=str(record["date"]),
+            created_at=str(record.get("created_at", created_at)),
+            is_sample=False,
+        )
+
     conn = get_connection()
     conn.execute(
         """INSERT INTO transactions (id, description, amount, type, category, date, created_at, is_sample)
@@ -78,6 +128,12 @@ def create_transaction(txn: TransactionCreate):
 @router.delete("/{transaction_id}", status_code=204)
 def delete_transaction(transaction_id: str):
     """Delete a transaction by ID."""
+    if is_supabase_ready():
+        deleted = supabase_delete_transaction(transaction_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        return None
+
     conn = get_connection()
     result = conn.execute("DELETE FROM transactions WHERE id = ?", (transaction_id,))
     conn.commit()

@@ -1,6 +1,6 @@
 {
   "model_version": "1.0.0",
-  "trained_at": "2026-10-20T12:17:08.980263Z",
+  "trained_at": "2026-10-20T12:55:22.845385Z",
   "random_seed": 42,
   "dataset_path": "transaction_categories.csv",
   "dataset_size": 245,

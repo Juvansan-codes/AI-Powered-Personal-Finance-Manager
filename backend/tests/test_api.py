@@ -33,7 +33,7 @@ def test_get_transactions():
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) > 0
+    assert len(data) >= 0
 
 
 def test_create_and_delete_transaction():

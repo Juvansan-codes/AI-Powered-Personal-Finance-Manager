@@ -25,11 +25,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the database, seed sample data, and load ML model on startup."""
+    """Initialize database and load ML model on startup."""
     init_db()
-    seeded = seed_if_empty()
-    if seeded:
-        logger.info("Database seeded with sample transactions.")
+    seed_if_empty()
+    from app.db.supabase import is_supabase_ready
+    if is_supabase_ready():
+        logger.info("Supabase PostgreSQL connected and active for transactions & budgets.")
+    else:
+        logger.info("Using local SQLite database.")
     # Load the ML categorization model (non-blocking — falls back to rule-based if unavailable)
     ml_loaded = load_ml_model()
     if ml_loaded:
