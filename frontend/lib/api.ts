@@ -10,6 +10,8 @@ import type {
   CategorizeResult,
   TranscriptionResponse,
   VoiceExtractResponse,
+  AssistantChatResponse,
+  AssistantSuggestionItem,
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
@@ -81,4 +83,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text, current_date: currentDate }),
     }),
+
+  // AI Conversational Assistant
+  askAssistant: (
+    message: string,
+    history?: { role: string; content: string }[]
+  ) =>
+    fetchJSON<AssistantChatResponse>("/api/assistant/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, history }),
+    }),
+
+  getAssistantSuggestions: () =>
+    fetchJSON<AssistantSuggestionItem[]>("/api/assistant/suggestions"),
 };
