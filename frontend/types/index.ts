@@ -80,6 +80,32 @@ export interface VoiceExtractResponse {
   draft?: TransactionDraft;
   raw_text: string;
 }
+export interface AnomalyItem {
+  transaction_id: string;
+  description: string;
+  amount: number;
+  category: string;
+  date: string;
+  is_anomaly: boolean;
+  anomaly_score: number;
+  severity: "low" | "medium" | "high";
+  method: string;
+  explanation: string;
+}
+
+export interface AnomalyReport {
+  total_scanned: number;
+  anomalies_detected: number;
+  method_used: string;
+  anomalies: AnomalyItem[];
+}
+
+export interface AnomalyCheckResponse {
+  is_anomaly: boolean;
+  anomaly_score: number;
+  severity?: "low" | "medium" | "high";
+  explanation?: string;
+}
 
 export interface AssistantChatMessage {
   id: string;
@@ -114,4 +140,3 @@ export interface AssistantSuggestionItem {
   prompt: string;
   category: string;
 }
-

@@ -7,9 +7,30 @@ from app.db.supabase import (
     supabase_get_category_spending,
     supabase_get_monthly_trend,
     supabase_get_insights,
+    supabase_list_transactions,
+)
+from app.schemas.anomaly import (
+    AnomalyReport,
+    AnomalyCheckRequest,
+    AnomalyCheckResponse,
+)
+from app.ai.anomaly_detector import (
+    detect_spending_anomalies,
+    check_transaction_anomaly,
 )
 
 router = APIRouter()
+
+
+def _fetch_all_transactions() -> list[dict]:
+    """Fetch raw transaction dictionaries from active store (Supabase or SQLite)."""
+    if is_supabase_ready():
+        return supabase_list_transactions(limit=500)
+
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM transactions ORDER BY date DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 @router.get("/summary")
@@ -163,4 +184,35 @@ def get_insights():
             "severity": "info",
         })
 
+    # AI Anomaly Detection insight
+    txns = _fetch_all_transactions()
+    anomaly_report = detect_spending_anomalies(txns)
+    if anomaly_report.anomalies_detected > 0:
+        top_anomaly = anomaly_report.anomalies[0]
+        insights.append({
+            "type": "anomaly_alert",
+            "title": f"Unusual Spending Alert ({anomaly_report.anomalies_detected} flagged)",
+            "message": top_anomaly.explanation,
+            "severity": "warning" if top_anomaly.severity in ("medium", "high") else "info",
+        })
+
     return insights
+
+
+@router.get("/anomalies", response_model=AnomalyReport)
+def get_anomalies():
+    """Scan all historical expenses and return detected spending anomalies."""
+    txns = _fetch_all_transactions()
+    return detect_spending_anomalies(txns)
+
+
+@router.post("/anomalies/check", response_model=AnomalyCheckResponse)
+def check_anomaly(req: AnomalyCheckRequest):
+    """Real-time anomaly evaluation for an incoming or draft transaction."""
+    txns = _fetch_all_transactions()
+    return check_transaction_anomaly(
+        amount=req.amount,
+        category=req.category,
+        historical_transactions=txns,
+        description=req.description or "",
+    )

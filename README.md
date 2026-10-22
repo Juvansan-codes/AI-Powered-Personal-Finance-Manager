@@ -246,9 +246,10 @@ python -m pytest tests
 | **Empirical Evaluation Pipeline**| M3 | Completed | Held-out stratified evaluation with confusion matrix & rule-based comparison |
 | **Hybrid Fallback Service** | M3 | Completed | Confidence-aware routing between ML, rule heuristics, and user review |
 | **ML UI Suggestions & Badges** | M3 | Completed | Category suggestion badges with numeric confidence scores and review prompts |
-| **Comprehensive Test Suite** | M3 | Completed | 40 passing automated tests (API, ML categorizer, Voice extraction, AI Assistant) |
+| **Isolation Forest Anomaly Detection** | M4 | Completed | Unsupervised tree outlier detection + robust Z-score/IQR baseline & review UI |
 | **Conversational AI Assistant** | M4 | Completed | Groq tool-calling agent with deterministic Python financial tools & purchase simulation |
 | **Assistant Chat UI & TTS** | M4 | Completed | Interactive chat with quick prompts, voice recording input, and speech synthesis |
+| **Comprehensive Test Suite** | M4 | Completed | 47 automated tests passing covering ML, Anomaly, Voice, Assistant, and API |
 
 ---
 

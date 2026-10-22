@@ -160,3 +160,48 @@ def test_budgets_endpoint():
     assert "budget_limit" in first
     assert "spent" in first
     assert "percentage" in first
+
+
+def test_anomalies_endpoint():
+    """Test scanning all transactions for anomalies via API."""
+    res = client.get("/api/analytics/anomalies")
+    assert res.status_code == 200
+    data = res.json()
+    assert "total_scanned" in data
+    assert "anomalies_detected" in data
+    assert "method_used" in data
+    assert "anomalies" in data
+    assert isinstance(data["anomalies"], list)
+
+
+def test_anomaly_check_endpoint():
+    """Test real-time anomaly check on single transaction draft."""
+    created_ids = []
+    for amt in [200.0, 250.0, 300.0]:
+        r = client.post("/api/transactions/", json={
+            "description": "Lunch",
+            "amount": amt,
+            "type": "expense",
+            "category": "Food",
+            "date": "2026-10-20",
+        })
+        created_ids.append(r.json()["id"])
+
+    try:
+        # Check extreme outlier
+        res = client.post("/api/analytics/anomalies/check", json={
+            "amount": 25000.0,
+            "category": "Food",
+            "type": "expense",
+            "description": "Golden burger at 5-star hotel"
+        })
+        assert res.status_code == 200
+        data = res.json()
+        assert "is_anomaly" in data
+        assert "anomaly_score" in data
+        assert data["is_anomaly"] is True
+        assert data["severity"] in ("medium", "high")
+        assert "explanation" in data
+    finally:
+        for tid in created_ids:
+            client.delete(f"/api/transactions/{tid}")
