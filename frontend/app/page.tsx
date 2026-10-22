@@ -4,12 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Plus, CalendarDays, RefreshCw, Mic } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import SummaryCards from "@/components/SummaryCards";
-import SpendingCharts from "@/components/SpendingCharts";
 import TransactionTable from "@/components/TransactionTable";
 import BudgetOverview from "@/components/BudgetOverview";
 import InsightsPanel from "@/components/InsightsPanel";
 import AddTransactionDialog from "@/components/AddTransactionDialog";
 import AssistantChat from "@/components/AssistantChat";
+import DashboardOverview from "@/components/DashboardOverview";
+import AnalyticsView from "@/components/AnalyticsView";
+import SettingsView from "@/components/SettingsView";
+import PetCompanion from "@/components/PetCompanion";
 import { api } from "@/lib/api";
 import type {
   Transaction,
@@ -22,17 +25,19 @@ import type {
 } from "@/types";
 
 const PAGE_TITLES: Record<string, string> = {
-  overview: "Overview",
-  transactions: "Transactions",
-  budgets: "Budgets",
-  analytics: "Analytics",
+  overview: "Overview Dashboard",
+  transactions: "Transactions Registry",
+  budgets: "Monthly Budgets",
+  analytics: "Financial Analytics & Outliers",
   assistant: "AI Financial Assistant",
+  settings: "Settings & Model Quotas",
 };
 
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState("overview");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [startWithVoice, setStartWithVoice] = useState(false);
+  const [showPet, setShowPet] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -103,7 +108,12 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#fafafa]">
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+      <Sidebar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        showPet={showPet}
+        onTogglePet={() => setShowPet((prev) => !prev)}
+      />
 
       <main className="flex-1 min-w-0">
         {/* Header */}
@@ -124,7 +134,7 @@ export default function Dashboard() {
                 className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 title="Refresh data"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={loading ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
               </button>
               <button
                 onClick={() => {
@@ -142,10 +152,10 @@ export default function Dashboard() {
                   setStartWithVoice(false);
                   setShowAddDialog(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg text-sm font-medium transition-colors shadow-xs"
               >
                 <Plus className="w-4 h-4" />
-                Add Transaction
+                <span>Add Transaction</span>
               </button>
             </div>
           </div>
@@ -158,35 +168,34 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Content */}
+        {/* Main Content Area */}
         <div className="px-6 lg:px-8 py-6 space-y-6">
-          {/* Overview / Analytics pages */}
-          {(currentPage === "overview" || currentPage === "analytics") && (
-            <>
-              <SummaryCards summary={summary} loading={loading} />
-              <SpendingCharts
-                categorySpending={categorySpending}
-                monthlyTrend={monthlyTrend}
-                loading={loading}
-              />
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
-                  <TransactionTable
-                    transactions={transactions}
-                    anomalies={anomalies}
-                    loading={loading}
-                    onDelete={handleDelete}
-                  />
-                </div>
-                <div className="space-y-4">
-                  <InsightsPanel insights={insights} loading={loading} />
-                  <BudgetOverview budgets={budgets} loading={loading} />
-                </div>
-              </div>
-            </>
+          {/* 1. Distinct Overview Dashboard */}
+          {currentPage === "overview" && (
+            <DashboardOverview
+              summary={summary}
+              transactions={transactions}
+              budgets={budgets}
+              insights={insights}
+              anomalies={anomalies}
+              loading={loading}
+              onNavigate={setCurrentPage}
+            />
           )}
 
-          {/* Transactions page */}
+          {/* 2. Distinct Deep Analytics & Machine Learning Outliers */}
+          {currentPage === "analytics" && (
+            <AnalyticsView
+              categorySpending={categorySpending}
+              monthlyTrend={monthlyTrend}
+              summary={summary}
+              transactions={transactions}
+              anomalies={anomalies}
+              loading={loading}
+            />
+          )}
+
+          {/* 3. Transactions Registry */}
           {currentPage === "transactions" && (
             <>
               <SummaryCards summary={summary} loading={loading} />
@@ -199,7 +208,7 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* Budgets page */}
+          {/* 4. Budgets Management */}
           {currentPage === "budgets" && (
             <>
               <SummaryCards summary={summary} loading={loading} />
@@ -210,12 +219,29 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* AI Assistant page */}
+          {/* 5. Conversational AI Assistant */}
           {currentPage === "assistant" && (
             <AssistantChat />
           )}
+
+          {/* 6. Settings & Model Quotas (Reference-styled) */}
+          {currentPage === "settings" && (
+            <SettingsView
+              onRefreshData={fetchAll}
+              showPet={showPet}
+              onTogglePet={() => setShowPet((prev) => !prev)}
+            />
+          )}
         </div>
       </main>
+
+      {/* Floating Desktop Pet Mascot */}
+      <PetCompanion
+        visible={showPet}
+        onClose={() => setShowPet(false)}
+        savingsRate={summary?.savings_rate}
+        balance={summary?.balance}
+      />
 
       {/* Add Transaction Dialog */}
       <AddTransactionDialog
