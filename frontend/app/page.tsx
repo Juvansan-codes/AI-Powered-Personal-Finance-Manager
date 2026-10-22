@@ -9,6 +9,7 @@ import TransactionTable from "@/components/TransactionTable";
 import BudgetOverview from "@/components/BudgetOverview";
 import InsightsPanel from "@/components/InsightsPanel";
 import AddTransactionDialog from "@/components/AddTransactionDialog";
+import AssistantChat from "@/components/AssistantChat";
 import { api } from "@/lib/api";
 import type {
   Transaction,
@@ -25,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
   transactions: "Transactions",
   budgets: "Budgets",
   analytics: "Analytics",
+  assistant: "AI Financial Assistant",
 };
 
 export default function Dashboard() {
@@ -206,6 +208,11 @@ export default function Dashboard() {
                 <InsightsPanel insights={insights} loading={loading} />
               </div>
             </>
+          )}
+
+          {/* AI Assistant page */}
+          {currentPage === "assistant" && (
+            <AssistantChat />
           )}
         </div>
       </main>

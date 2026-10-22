@@ -80,7 +80,6 @@ export interface VoiceExtractResponse {
   draft?: TransactionDraft;
   raw_text: string;
 }
-
 export interface AnomalyItem {
   transaction_id: string;
   description: string;
@@ -106,4 +105,38 @@ export interface AnomalyCheckResponse {
   anomaly_score: number;
   severity?: "low" | "medium" | "high";
   explanation?: string;
+}
+
+export interface AssistantChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  tools_used?: {
+    tool_name: string;
+    arguments: Record<string, any>;
+    summary?: string;
+  }[];
+  timestamp: string;
+}
+
+export interface AssistantChatRequest {
+  message: string;
+  history?: { role: string; content: string }[];
+}
+
+export interface AssistantChatResponse {
+  reply: string;
+  tools_used: {
+    tool_name: string;
+    arguments: Record<string, any>;
+    summary?: string;
+  }[];
+  suggestions: string[];
+}
+
+export interface AssistantSuggestionItem {
+  id: string;
+  label: string;
+  prompt: string;
+  category: string;
 }
