@@ -247,6 +247,9 @@ python -m pytest tests
 | **Hybrid Fallback Service** | M3 | Completed | Confidence-aware routing between ML, rule heuristics, and user review |
 | **ML UI Suggestions & Badges** | M3 | Completed | Category suggestion badges with numeric confidence scores and review prompts |
 | **Comprehensive Test Suite** | M3 | Completed | 29 passing automated tests (API, ML categorizer, Voice extraction) |
+| **Isolation Forest Anomaly Detection** | M4 | Completed | Unsupervised tree outlier detection + robust Z-score/IQR baseline |
+| **Anomaly Review UI & Badges** | M4 | Completed | Flagged transaction badges with transparent relative explanations |
+| **Expanded Test Suite (37 tests)** | M4 | Completed | 37 automated tests passing covering ML, Anomaly, Voice, and API |
 
 ---
 

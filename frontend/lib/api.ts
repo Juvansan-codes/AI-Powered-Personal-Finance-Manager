@@ -10,6 +10,8 @@ import type {
   CategorizeResult,
   TranscriptionResponse,
   VoiceExtractResponse,
+  AnomalyReport,
+  AnomalyCheckResponse,
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
@@ -42,6 +44,12 @@ export const api = {
     fetchJSON<CategorySpending[]>("/api/analytics/category-spending"),
   getMonthlyTrend: () => fetchJSON<MonthlyTrend[]>("/api/analytics/monthly-trend"),
   getInsights: () => fetchJSON<Insight[]>("/api/analytics/insights"),
+  getAnomalies: () => fetchJSON<AnomalyReport>("/api/analytics/anomalies"),
+  checkAnomaly: (amount: number, category: string, description?: string) =>
+    fetchJSON<AnomalyCheckResponse>("/api/analytics/anomalies/check", {
+      method: "POST",
+      body: JSON.stringify({ amount, category, type: "expense", description }),
+    }),
 
   // Budgets
   getBudgets: () => fetchJSON<Budget[]>("/api/budgets/"),

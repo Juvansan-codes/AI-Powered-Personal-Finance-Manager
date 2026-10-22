@@ -17,6 +17,7 @@ import type {
   MonthlyTrend,
   Insight,
   Budget,
+  AnomalyItem,
 } from "@/types";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -40,18 +41,20 @@ export default function Dashboard() {
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
 
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const [txns, sum, cats, monthly, ins, budg] = await Promise.all([
+      const [txns, sum, cats, monthly, ins, budg, anomReport] = await Promise.all([
         api.getTransactions(),
         api.getSummary(),
         api.getCategorySpending(),
         api.getMonthlyTrend(),
         api.getInsights(),
         api.getBudgets(),
+        api.getAnomalies().catch(() => ({ anomalies: [] })),
       ]);
       setTransactions(txns);
       setSummary(sum);
@@ -59,6 +62,7 @@ export default function Dashboard() {
       setMonthlyTrend(monthly);
       setInsights(ins);
       setBudgets(budg);
+      setAnomalies(anomReport?.anomalies || []);
     } catch (err: any) {
       setError(
         "Could not connect to the backend. Make sure the FastAPI server is running on http://localhost:8000"
@@ -167,6 +171,7 @@ export default function Dashboard() {
                 <div className="lg:col-span-2">
                   <TransactionTable
                     transactions={transactions}
+                    anomalies={anomalies}
                     loading={loading}
                     onDelete={handleDelete}
                   />
@@ -185,6 +190,7 @@ export default function Dashboard() {
               <SummaryCards summary={summary} loading={loading} />
               <TransactionTable
                 transactions={transactions}
+                anomalies={anomalies}
                 loading={loading}
                 onDelete={handleDelete}
               />

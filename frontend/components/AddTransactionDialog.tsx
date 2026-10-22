@@ -9,6 +9,7 @@ import {
   Square,
   RefreshCw,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Volume2,
 } from "lucide-react";
@@ -62,6 +63,9 @@ export default function AddTransactionDialog({
     method: string;
     requires_review: boolean;
   } | null>(null);
+
+  // Real-time Anomaly Alert
+  const [anomalyAlert, setAnomalyAlert] = useState<string | null>(null);
 
   // Voice recording state
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
@@ -146,6 +150,30 @@ export default function AddTransactionDialog({
     return () => clearTimeout(timer);
   }, [description, type]);
 
+  // Real-time anomaly check when amount and category change
+  useEffect(() => {
+    const amtNum = parseFloat(amount);
+    if (!amtNum || amtNum <= 0 || !category || type !== "expense") {
+      setAnomalyAlert(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.checkAnomaly(amtNum, category, description);
+        if (res.is_anomaly && res.explanation) {
+          setAnomalyAlert(res.explanation);
+        } else {
+          setAnomalyAlert(null);
+        }
+      } catch {
+        setAnomalyAlert(null);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [amount, category, type, description]);
+
   const resetForm = () => {
     setDescription("");
     setAmount("");
@@ -155,6 +183,7 @@ export default function AddTransactionDialog({
     setError("");
     setSuccess(false);
     setSuggestion(null);
+    setAnomalyAlert(null);
     setVoiceStatus("idle");
     setVoiceError("");
     setRecordSeconds(0);
@@ -701,6 +730,20 @@ export default function AddTransactionDialog({
                 </select>
               </div>
             </div>
+
+            {/* Real-time Unusual Spending Notice */}
+            {anomalyAlert && (
+              <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-200/80 rounded-lg text-xs text-amber-900 animate-in fade-in duration-200">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-900">Spending Anomaly Notice</p>
+                  <p className="text-amber-800 text-[11.5px] mt-0.5 leading-relaxed">{anomalyAlert}</p>
+                  <p className="text-[10.5px] text-amber-700/80 mt-1">
+                    You can still confirm and save if this expense was intentional.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Date */}
             <div>
