@@ -14,6 +14,8 @@ import type {
   AnomalyCheckResponse,
   AssistantChatResponse,
   AssistantSuggestionItem,
+  ModelQuotaResponse,
+  TestConnectionResponse,
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
@@ -104,4 +106,15 @@ export const api = {
 
   getAssistantSuggestions: () =>
     fetchJSON<AssistantSuggestionItem[]>("/api/assistant/suggestions"),
+
+  // Settings & Model Quota
+  getQuota: () => fetchJSON<ModelQuotaResponse>("/api/settings/quota"),
+  testGroqConnection: () =>
+    fetchJSON<TestConnectionResponse>("/api/settings/test-connection", {
+      method: "POST",
+    }),
+  reseedData: () =>
+    fetchJSON<{ status: string; message: string }>("/api/settings/reseed-data", {
+      method: "POST",
+    }),
 };

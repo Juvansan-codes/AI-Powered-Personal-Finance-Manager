@@ -140,3 +140,65 @@ export interface AssistantSuggestionItem {
   prompt: string;
   category: string;
 }
+
+export interface UserProfile {
+  name: string;
+  initials: string;
+  email: string;
+  role: string;
+  plan_tier: string;
+  avatar_color?: string;
+}
+
+export interface QuotaMetricItem {
+  limit: number;
+  used: number;
+  remaining: number;
+  percent_used: number;
+}
+
+export interface AudioQuotaItem {
+  limit_minutes: number;
+  used_minutes: number;
+  remaining_minutes: number;
+  percent_used: number;
+}
+
+export interface ModelQuotaResponse {
+  user_profile: UserProfile;
+  groq_status: {
+    connected: boolean;
+    masked_key: string;
+    active_llm_model: string;
+    active_stt_model: string;
+    provider: string;
+  };
+  quota_metrics: {
+    plan_name: string;
+    resets_in: string;
+    tpm: QuotaMetricItem;
+    rpm: QuotaMetricItem;
+    audio: AudioQuotaItem;
+    tool_calls_today: number;
+    total_requests_today: number;
+  };
+  database: {
+    type: string;
+    status: string;
+    sync_mode: string;
+  };
+  available_models: {
+    id: string;
+    name: string;
+    context: string;
+    speed: string;
+  }[];
+}
+
+export interface TestConnectionResponse {
+  status: string;
+  latency_ms: number;
+  model: string;
+  message: string;
+}
+
