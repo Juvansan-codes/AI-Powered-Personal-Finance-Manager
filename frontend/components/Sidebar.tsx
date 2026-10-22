@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { icon: ArrowLeftRight, label: "Transactions", id: "transactions", active: true },
   { icon: Wallet, label: "Budgets", id: "budgets", active: true },
   { icon: BarChart3, label: "Analytics", id: "analytics", active: true },
-  { icon: Bot, label: "AI Assistant", id: "assistant", coming: true },
+  { icon: Bot, label: "AI Assistant", id: "assistant", active: true },
   { icon: Settings, label: "Settings", id: "settings", coming: true },
 ];
 

@@ -246,13 +246,15 @@ python -m pytest tests
 | **Empirical Evaluation Pipeline**| M3 | Completed | Held-out stratified evaluation with confusion matrix & rule-based comparison |
 | **Hybrid Fallback Service** | M3 | Completed | Confidence-aware routing between ML, rule heuristics, and user review |
 | **ML UI Suggestions & Badges** | M3 | Completed | Category suggestion badges with numeric confidence scores and review prompts |
-| **Comprehensive Test Suite** | M3 | Completed | 29 passing automated tests (API, ML categorizer, Voice extraction) |
+| **Comprehensive Test Suite** | M3 | Completed | 40 passing automated tests (API, ML categorizer, Voice extraction, AI Assistant) |
+| **Conversational AI Assistant** | M4 | Completed | Groq tool-calling agent with deterministic Python financial tools & purchase simulation |
+| **Assistant Chat UI & TTS** | M4 | Completed | Interactive chat with quick prompts, voice recording input, and speech synthesis |
 
 ---
 
-## 7. Next Steps (Milestone 4 Roadmap)
+## 7. Next Steps (Roadmap)
 
 1. **Supabase PostgreSQL & Auth:** Migrate SQLite schema to Supabase with user authentication and Row Level Security.
-2. **Conversational Financial Assistant:** Implement a tool-calling AI agent using Groq LLM to query financial summaries and run what-if simulations.
-3. **Continuous ML Feedback Loop:** Record user category corrections locally to incrementally update classification weights.
+2. **Continuous ML Feedback Loop:** Record user category corrections locally to incrementally update classification weights.
+3. **Budget Proposal Generator:** Expand assistant tools with automated budget recommendation algorithms.
 
