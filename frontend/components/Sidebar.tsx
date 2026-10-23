@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -40,8 +41,36 @@ export default function Sidebar({
   showPet = false,
   onTogglePet,
 }: SidebarProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [currentUser, setCurrentUser] = useState({
+    name: "E. Abishek Joseph",
+    initials: "EJ",
+    tier: "Go",
+  });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("financeflow_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.name) {
+          const initials = parsed.name
+            .split(" ")
+            .map((n: string) => n[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+          setCurrentUser({
+            name: parsed.name,
+            initials: initials || "EJ",
+            tier: parsed.plan_tier || "Go",
+          });
+        }
+      }
+    } catch {}
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -139,15 +168,15 @@ export default function Sidebar({
                    setMenuOpen(false);
                  }}>
               <div className="w-8 h-8 rounded-full bg-[#10b981] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-sm">
-                EJ
+                {currentUser.initials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-neutral-100 truncate text-[13px] leading-tight">
-                  E. Abishek Joseph
+                  {currentUser.name}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="inline-block px-1.5 py-0.2 bg-[#10b981]/20 text-[#34d399] font-medium rounded text-[10px]">
-                    Go
+                    {currentUser.tier}
                   </span>
                   <span className="text-[11px] text-neutral-400">Owner</span>
                 </div>
@@ -247,8 +276,12 @@ export default function Sidebar({
               {/* Log out */}
               <button
                 onClick={() => {
-                  alert("Session active as E. Abishek Joseph (Go Tier). Settings and preferences saved locally.");
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("financeflow_token");
+                    localStorage.removeItem("financeflow_user");
+                  }
                   setMenuOpen(false);
+                  router.push("/login");
                 }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-500/10 text-neutral-300 hover:text-red-400 transition-colors text-left"
               >
@@ -270,15 +303,15 @@ export default function Sidebar({
           )}
         >
           <div className="w-8 h-8 rounded-full bg-[#10b981] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-xs">
-            EJ
+            {currentUser.initials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-foreground truncate">
-                E. Abishek Joseph
+                {currentUser.name}
               </p>
               <span className="text-[10px] font-semibold px-1.5 py-0.2 bg-[#10b981]/15 text-[#059669] rounded">
-                Go
+                {currentUser.tier}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground truncate">

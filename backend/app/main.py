@@ -18,6 +18,7 @@ from app.api.budgets import router as budgets_router
 from app.api.voice import router as voice_router
 from app.api.assistant import router as assistant_router
 from app.api.settings import router as settings_router
+from app.api.auth import router as auth_router
 from app.services.ml_categorizer import load_ml_model
 
 load_dotenv()
@@ -74,3 +75,4 @@ app.include_router(budgets_router, prefix="/api/budgets", tags=["Budgets"])
 app.include_router(voice_router, prefix="/api/voice", tags=["Voice"])
 app.include_router(assistant_router, prefix="/api/assistant", tags=["AI Assistant"])
 app.include_router(settings_router, prefix="/api/settings", tags=["Settings"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])

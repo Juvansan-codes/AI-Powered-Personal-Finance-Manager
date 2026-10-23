@@ -202,3 +202,32 @@ export interface TestConnectionResponse {
   message: string;
 }
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  plan_tier: string;
+  avatar_color?: string;
+  is_verified?: boolean;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user: AuthUser;
+  access_token: string;
+  token_type: string;
+  message: string;
+}
+
+export interface SignupResponse {
+  status: string;
+  email: string;
+  message: string;
+  expires_in_seconds?: number;
+  access_token?: string;
+  user?: AuthUser;
+}
+
+
+

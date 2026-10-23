@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, CalendarDays, RefreshCw, Mic } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import SummaryCards from "@/components/SummaryCards";
@@ -34,12 +35,41 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
   const [currentPage, setCurrentPage] = useState("overview");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [startWithVoice, setStartWithVoice] = useState(false);
   const [showPet, setShowPet] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("financeflow_token")
+        : null;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    api
+      .getMe()
+      .then((user) => {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("financeflow_user", JSON.stringify(user));
+        }
+        setAuthChecked(true);
+      })
+      .catch((err) => {
+        console.warn("Session check error, redirecting to login:", err);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("financeflow_token");
+          localStorage.removeItem("financeflow_user");
+        }
+        router.push("/login");
+      });
+  }, [router]);
 
   // Data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -81,8 +111,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (authChecked) {
+      fetchAll();
+    }
+  }, [authChecked, fetchAll]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -105,6 +137,21 @@ export default function Dashboard() {
       })
     );
   }, []);
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fafafa]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-md shadow-accent/20 animate-pulse">
+            <span className="text-white font-bold text-base">F</span>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium animate-pulse">
+            Connecting to Supabase...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#fafafa]">

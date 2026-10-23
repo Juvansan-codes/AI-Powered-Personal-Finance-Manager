@@ -16,16 +16,36 @@ import type {
   AssistantSuggestionItem,
   ModelQuotaResponse,
   TestConnectionResponse,
+  AuthResponse,
+  SignupResponse,
+  AuthUser,
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("financeflow_token")
+      : null;
+
+  const headers = new Headers(options?.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers,
   });
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`API error ${res.status}: ${error}`);
+    let errorMsg = `API error ${res.status}`;
+    try {
+      const errJson = await res.json();
+      errorMsg = errJson.detail || errorMsg;
+    } catch {
+      errorMsg = (await res.text()) || errorMsg;
+    }
+    throw new Error(errorMsg);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -117,4 +137,30 @@ export const api = {
     fetchJSON<{ status: string; message: string }>("/api/settings/reseed-data", {
       method: "POST",
     }),
+
+  // Authentication & OTP Verification
+  login: (data: { email: string; password: string }) =>
+    fetchJSON<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  signup: (data: { name: string; email: string; password: string; phone?: string }) =>
+    fetchJSON<SignupResponse>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  verifyOtp: (data: { email: string; otp: string }) =>
+    fetchJSON<AuthResponse>("/api/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  resendOtp: (email: string) =>
+    fetchJSON<{ success: boolean; email: string; message: string }>(
+      "/api/auth/resend-otp",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }
+    ),
+  getMe: () => fetchJSON<AuthUser>("/api/auth/me"),
 };

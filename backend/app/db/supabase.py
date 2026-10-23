@@ -14,12 +14,13 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 _supabase_client = None
+_supabase_anon_client = None
 _tables_checked = False
 _tables_available = False
 
 
 def get_supabase_client():
-    """Retrieve or initialize the Supabase client."""
+    """Retrieve or initialize the Supabase admin/service_role client."""
     global _supabase_client
     if _supabase_client is not None:
         return _supabase_client
@@ -36,6 +37,27 @@ def get_supabase_client():
         return _supabase_client
     except Exception as e:
         logger.warning(f"Could not initialize Supabase client: {e}")
+        return None
+
+
+def get_supabase_anon_client():
+    """Retrieve or initialize the Supabase anonymous/public client."""
+    global _supabase_anon_client
+    if _supabase_anon_client is not None:
+        return _supabase_anon_client
+
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_ANON_KEY", "").strip() or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+    if not url or not key:
+        return None
+
+    try:
+        from supabase import create_client
+        _supabase_anon_client = create_client(url, key)
+        return _supabase_anon_client
+    except Exception as e:
+        logger.warning(f"Could not initialize Supabase anon client: {e}")
         return None
 
 
