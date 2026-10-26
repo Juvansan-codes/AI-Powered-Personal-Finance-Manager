@@ -14,7 +14,7 @@ import DashboardOverview from "@/components/DashboardOverview";
 import AnalyticsView from "@/components/AnalyticsView";
 import SettingsView from "@/components/SettingsView";
 import PetCompanion from "@/components/PetCompanion";
-import { api } from "@/lib/api";
+import { api, AuthSessionError, NetworkError } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import AuthScreen from "@/components/AuthScreen";
 import type {
@@ -77,20 +77,83 @@ export default function Dashboard() {
       setBudgets(budg);
       setAnomalies(anomReport?.anomalies || []);
     } catch (err: any) {
-      setError(
-        "Could not connect to the backend. Make sure the FastAPI server is running on http://localhost:8000"
-      );
-      console.error(err);
+      if (
+        err instanceof AuthSessionError ||
+        err?.name === "AuthSessionError" ||
+        err?.message?.includes("401") ||
+        err?.message?.includes("session")
+      ) {
+        // Session expired or invalid - reset user state to display AuthScreen cleanly
+        await supabase?.auth.signOut().catch(() => {});
+        setUser(null);
+      } else if (err instanceof NetworkError || err?.name === "NetworkError") {
+        setError(err.message);
+      } else {
+        setError(
+          "Could not connect to the backend. Make sure the FastAPI server is running on http://localhost:8000"
+        );
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (!supabase) { setAuthLoading(false); return; }
-    supabase.auth.getUser().then(({ data }) => { setUser(data.user); setAuthLoading(false); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
-    return () => listener.subscription.unsubscribe();
+    const client = supabase;
+    if (!client) {
+      setAuthLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const initAuth = async () => {
+      try {
+        const { data: { session }, error } = await client.auth.getSession();
+        if (!isMounted) return;
+
+        if (error || !session) {
+          setUser(null);
+          setAuthLoading(false);
+          return;
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        // If session is expired or expiring in under 10 seconds, refresh before setting user
+        if (session.expires_at && session.expires_at <= now + 10) {
+          const { data: refreshed, error: refreshErr } = await client.auth.refreshSession();
+          if (!isMounted) return;
+          if (refreshErr || !refreshed.session) {
+            await client.auth.signOut().catch(() => {});
+            setUser(null);
+          } else {
+            setUser(refreshed.session.user);
+          }
+        } else {
+          setUser(session.user);
+        }
+      } catch {
+        if (isMounted) setUser(null);
+      } finally {
+        if (isMounted) setAuthLoading(false);
+      }
+    };
+
+    initAuth();
+
+    const { data: listener } = client.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      if (event === "SIGNED_OUT" || !session) {
+        setUser(null);
+      } else if (session?.user) {
+        setUser(session.user);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => { if (user) fetchAll(); }, [user, fetchAll]);

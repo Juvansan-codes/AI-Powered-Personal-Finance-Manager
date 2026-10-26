@@ -1,0 +1,138 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Network Connectivity Failure Handling
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists
+  - **Scoped PBT Approach**: Scope the property to concrete failing cases: backend server not running, network timeout, DNS failure, CORS blocked request
+  - Test that `fetchJSON` throws unhandled `TypeError` when `fetch()` encounters network connectivity failures
+  - Test cases to include:
+    - Backend server not running: Mock `fetch()` to throw `TypeError: Failed to fetch`, call `api.getTransactions()` 
+    - Network timeout: Mock `fetch()` to throw timeout error, call `api.getSummary()`
+    - DNS resolution failure: Mock `fetch()` to throw network error, call `api.getBudgets()`
+    - CORS blocked request: Mock `fetch()` to throw CORS error, call `api.categorize()`
+  - Run test on UNFIXED code in `frontend/lib/api.ts`
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found:
+    - All network errors propagate as unhandled `TypeError` exceptions
+    - No diagnostic logging occurs
+    - No user-friendly error messages are provided
+    - UI components would crash when calling any API method during network failures
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 2.1, 2.2, 2.3_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Successful Request and HTTP Error Behavior
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs (server reachable, returns HTTP responses)
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Successful GET request returns parsed JSON data
+    - Successful POST request sends body and headers correctly
+    - 401 response triggers single-flight token refresh and retry
+    - HTTP errors (400, 404, 500) parse error messages from response body and throw Error objects
+    - 204 No Content returns `undefined`
+    - FormData uploads in `transcribeAudio` work with custom headers
+    - Concurrent API requests execute independently
+  - Property-based testing generates many test cases for stronger guarantees
+  - Test cases to include:
+    - Mock successful 200 response with JSON body, verify `fetchJSON` returns parsed data
+    - Mock successful 201 response, verify POST request body sent correctly
+    - Mock 401 response then successful retry, verify auth retry logic
+    - Mock 400, 404, 500 responses, verify error messages parsed correctly
+    - Mock 204 response, verify `undefined` returned
+    - Mock successful FormData upload in `transcribeAudio`
+    - Fire multiple concurrent API calls, verify independent execution
+  - Run tests on UNFIXED code in `frontend/lib/api.ts`
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [x] 3. Fix for backend connectivity error handling
+
+  - [x] 3.1 Add NetworkError class
+    - Define custom `NetworkError` class before `fetchJSON` function
+    - Extend Error with additional properties: `url`, `cause`
+    - Set `name` property to "NetworkError"
+    - Export the class for use in components
+    - _Bug_Condition: isBugCondition(input) where fetch() encounters network connectivity failures (backendServerNotRunning OR networkConnectivityLost OR dnsResolutionFailed OR corsBlocked) AND fetchThrowsException AND NOT exceptionCaught_
+    - _Expected_Behavior: expectedBehavior(result) - catch exception, log diagnostics, throw structured NetworkError with user-friendly message_
+    - _Preservation: Preserve all successful request handling (2xx responses), 401 auth retry logic, HTTP error parsing (4xx/5xx), 204 No Content handling, FormData uploads, concurrent request execution_
+    - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
+
+  - [x] 3.2 Wrap fetch() in try-catch block in fetchJSON
+    - Add try-catch block around the `fetch()` call in `fetchJSON` function (line 90)
+    - Declare `let res: Response;` before try block
+    - Move fetch call inside try block: `res = await fetch(...)`
+    - Add catch block to handle network errors
+    - _Bug_Condition: isBugCondition(input) where fetch() throws exception due to network failure_
+    - _Expected_Behavior: expectedBehavior(result) - exception is caught, not propagated_
+    - _Preservation: Preserve existing response handling logic after successful fetch_
+    - _Requirements: 2.1, 2.2, 3.1, 3.2, 3.3_
+
+  - [x] 3.3 Add diagnostic logging in catch block
+    - Log error with `console.error('[API Network Error]', {...})`
+    - Include in log object:
+      - `url`: Full attempted URL (`${API_BASE}${url}`)
+      - `apiBase`: API_BASE configuration value
+      - `isRetry`: Current retry state
+      - `error`: Error message (handle both Error objects and other types)
+    - _Bug_Condition: isBugCondition(input) where network error occurs_
+    - _Expected_Behavior: expectedBehavior(result) - diagnostic information logged to console_
+    - _Preservation: No logging added to successful request paths_
+    - _Requirements: 2.2, 2.3_
+
+  - [x] 3.4 Throw structured NetworkError in catch block
+    - Create NetworkError instance with user-friendly message
+    - Message format: "Unable to connect to server. Please ensure the backend is running at {API_BASE} and check your network connection."
+    - Pass full URL and original error as cause
+    - Throw the NetworkError
+    - _Bug_Condition: isBugCondition(input) where network error occurs_
+    - _Expected_Behavior: expectedBehavior(result) - structured NetworkError thrown with user-friendly message_
+    - _Preservation: HTTP errors still throw regular Error objects with status codes_
+    - _Requirements: 2.1, 2.3_
+
+  - [x] 3.5 Apply same try-catch pattern to transcribeAudio
+    - Wrap both `fetch()` calls in `transcribeAudio` method with try-catch
+    - First fetch: Status check endpoint
+    - Second fetch: Transcription upload
+    - Add same diagnostic logging in catch blocks
+    - Throw NetworkError with appropriate messages for each operation
+    - _Bug_Condition: isBugCondition(input) where transcribeAudio encounters network failures_
+    - _Expected_Behavior: expectedBehavior(result) - network errors caught and handled gracefully_
+    - _Preservation: Preserve existing FormData upload behavior and error handling for HTTP errors_
+    - _Requirements: 2.1, 2.2, 2.3, 3.4_
+
+  - [x] 3.6 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Network Connectivity Failure Handling
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - Verify network errors are caught and NetworkError is thrown
+    - Verify diagnostic logging occurs with correct URL, API_BASE, error details
+    - Verify error message is user-friendly and actionable
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - _Requirements: Property 1 - Bug Condition from design (Requirements 2.1, 2.2, 2.3)_
+
+  - [x] 3.7 Verify preservation tests still pass
+    - **Property 2: Preservation** - Successful Request and HTTP Error Behavior
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - Verify successful requests (2xx) still return parsed JSON
+    - Verify 401 auth retry logic still works
+    - Verify HTTP error responses (4xx/5xx) still parsed correctly
+    - Verify 204 No Content still returns undefined
+    - Verify FormData uploads still work
+    - Verify concurrent requests still execute independently
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions)
+    - _Requirements: Property 2 - Preservation from design (Requirements 3.1, 3.2, 3.3, 3.4)_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Run complete test suite for API module
+  - Verify bug condition test passes (network errors handled)
+  - Verify preservation tests pass (existing behavior unchanged)
+  - Review console logs to confirm diagnostic logging works
+  - Ask user if any questions arise about the implementation
