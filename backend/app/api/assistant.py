@@ -1,7 +1,8 @@
 """
 FastAPI router for Conversational AI Assistant.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from app.auth import require_user
 import logging
 
 from app.schemas.assistant import ChatRequest, ChatResponse, SuggestionItem
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat_with_assistant(req: ChatRequest):
+def chat_with_assistant(req: ChatRequest, user_id: str = Depends(require_user)):
     """
     Interact with the conversational personal finance assistant.
     The assistant can inspect account summaries, category spending, recent transactions,
@@ -28,6 +29,7 @@ def chat_with_assistant(req: ChatRequest):
         result = run_financial_assistant(
             user_message=req.message,
             conversation_history=history_dicts,
+            user_id=user_id,
         )
         return ChatResponse(
             reply=result["reply"],
@@ -49,7 +51,7 @@ def chat_with_assistant(req: ChatRequest):
 
 
 @router.get("/suggestions", response_model=list[SuggestionItem])
-def get_prompt_suggestions():
+def get_prompt_suggestions(user_id: str = Depends(require_user)):
     """
     Return curated starter prompts categorized for user interaction.
     """

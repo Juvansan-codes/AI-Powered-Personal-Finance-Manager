@@ -17,6 +17,7 @@ import {
   Egg,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { User } from "@supabase/supabase-js";
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Overview", id: "overview", active: true },
@@ -32,6 +33,8 @@ interface SidebarProps {
   onNavigate: (page: string) => void;
   showPet?: boolean;
   onTogglePet?: () => void;
+  user: User;
+  onSignOut: () => void;
 }
 
 export default function Sidebar({
@@ -39,7 +42,11 @@ export default function Sidebar({
   onNavigate,
   showPet = false,
   onTogglePet,
+  user,
+  onSignOut,
 }: SidebarProps) {
+  const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Account";
+  const initials = displayName.slice(0, 2).toUpperCase();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +92,7 @@ export default function Sidebar({
           </div>
           <div>
             <span className="text-lg font-semibold tracking-tight text-foreground block leading-tight">
-              FinanceFlow
+              Oria
             </span>
             <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
               AI Manager
@@ -139,11 +146,11 @@ export default function Sidebar({
                    setMenuOpen(false);
                  }}>
               <div className="w-8 h-8 rounded-full bg-[#10b981] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-sm">
-                EJ
+                {initials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-neutral-100 truncate text-[13px] leading-tight">
-                  E. Abishek Joseph
+                  {displayName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="inline-block px-1.5 py-0.2 bg-[#10b981]/20 text-[#34d399] font-medium rounded text-[10px]">
@@ -230,7 +237,7 @@ export default function Sidebar({
               {/* Help */}
               <button
                 onClick={() => {
-                  alert("FinanceFlow AI Help:\n\n• Press Ctrl+, for Settings & Model Quotas\n• Press Alt+Win+P to toggle your Financial Pet Companion\n• Click Voice Entry to speak transactions naturally in Indian Rupees\n• Ask FinanceFlow AI in AI Assistant for simulations and savings plans");
+                  alert("Oria AI Help:\n\n• Press Ctrl+, for Settings & Model Quotas\n• Press Alt+Win+P to toggle your Financial Pet Companion\n• Click Voice Entry to speak transactions naturally in Indian Rupees\n• Ask Oria AI in AI Assistant for simulations and savings plans");
                   setMenuOpen(false);
                 }}
                 className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-neutral-800 text-neutral-200 hover:text-white transition-colors text-left"
@@ -247,7 +254,7 @@ export default function Sidebar({
               {/* Log out */}
               <button
                 onClick={() => {
-                  alert("Session active as E. Abishek Joseph (Go Tier). Settings and preferences saved locally.");
+                  onSignOut();
                   setMenuOpen(false);
                 }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-500/10 text-neutral-300 hover:text-red-400 transition-colors text-left"
@@ -270,12 +277,12 @@ export default function Sidebar({
           )}
         >
           <div className="w-8 h-8 rounded-full bg-[#10b981] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-xs">
-            EJ
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-foreground truncate">
-                E. Abishek Joseph
+                {displayName}
               </p>
               <span className="text-[10px] font-semibold px-1.5 py-0.2 bg-[#10b981]/15 text-[#059669] rounded">
                 Go

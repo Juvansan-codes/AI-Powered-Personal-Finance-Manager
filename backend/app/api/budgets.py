@@ -1,5 +1,6 @@
 """Budget API routes — Supports Supabase with SQLite fallback."""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.auth import require_user
 from app.db.database import get_connection
 from app.db.supabase import is_supabase_ready, supabase_get_budgets
 
@@ -7,10 +8,10 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_budgets():
+def get_budgets(user_id: str = Depends(require_user)):
     """Get all budgets with current spending calculated from transactions."""
     if is_supabase_ready():
-        return supabase_get_budgets()
+        return supabase_get_budgets(user_id)
 
     conn = get_connection()
     budgets = conn.execute("SELECT * FROM budgets").fetchall()

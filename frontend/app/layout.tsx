@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FinanceFlow — AI-Powered Personal Finance Manager",
+  title: "Oria — AI-Powered Personal Finance Manager",
   description:
     "Track income and expenses, get AI-powered insights, and manage your finances intelligently.",
 };

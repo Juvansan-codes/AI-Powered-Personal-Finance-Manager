@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import type { ModelQuotaResponse, TestConnectionResponse } from "@/types";
 
 interface SettingsViewProps {
+  userName: string;
+  userEmail: string;
   onRefreshData?: () => void;
   showPet?: boolean;
   onTogglePet?: () => void;
@@ -36,6 +38,8 @@ interface SettingsViewProps {
 type SettingsTab = "quota" | "profile" | "models" | "data" | "shortcuts";
 
 export default function SettingsView({
+  userName: authenticatedUserName,
+  userEmail: authenticatedUserEmail,
   onRefreshData,
   showPet = false,
   onTogglePet,
@@ -50,8 +54,8 @@ export default function SettingsView({
   const [connectionResult, setConnectionResult] = useState<TestConnectionResponse | null>(null);
 
   // Profile local state
-  const [userName, setUserName] = useState("E. Abishek Joseph");
-  const [userEmail, setUserEmail] = useState("abishek.joseph@example.com");
+  const [userName, setUserName] = useState(authenticatedUserName);
+  const [userEmail, setUserEmail] = useState(authenticatedUserEmail);
   const [currency, setCurrency] = useState("INR");
   const [savingsGoal, setSavingsGoal] = useState("20");
 
@@ -70,8 +74,6 @@ export default function SettingsView({
       setError("");
       const data = await api.getQuota();
       setQuotaData(data);
-      if (data.user_profile?.name) setUserName(data.user_profile.name);
-      if (data.user_profile?.email) setUserEmail(data.user_profile.email);
       if (data.groq_status?.active_llm_model) setSelectedLlm(data.groq_status.active_llm_model);
     } catch (err: any) {
       setError("Could not load real-time model quota from backend.");
@@ -84,6 +86,11 @@ export default function SettingsView({
   useEffect(() => {
     fetchQuota();
   }, []);
+
+  useEffect(() => {
+    setUserName(authenticatedUserName);
+    setUserEmail(authenticatedUserEmail);
+  }, [authenticatedUserName, authenticatedUserEmail]);
 
   const handleTestConnection = async () => {
     try {
@@ -122,7 +129,7 @@ export default function SettingsView({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `financeflow-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `oria-export-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
       triggerNotice("Exported JSON successfully.");
@@ -153,7 +160,7 @@ export default function SettingsView({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `financeflow-transactions-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `oria-transactions-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       triggerNotice("Exported CSV successfully.");

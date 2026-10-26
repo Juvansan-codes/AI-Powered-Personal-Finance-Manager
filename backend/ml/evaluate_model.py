@@ -141,7 +141,7 @@ def print_confusion_matrix(cm, labels):
 
 def main():
     print("=" * 70)
-    print("FinanceFlow - ML Model Evaluation & Comparison")
+    print("Oria - ML Model Evaluation & Comparison")
     print("=" * 70)
 
     # Load dataset with same split as training

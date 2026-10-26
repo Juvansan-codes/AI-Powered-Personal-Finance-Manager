@@ -1,5 +1,5 @@
 """
-Unit and integration tests for FinanceFlow API.
+Unit and integration tests for Oria API.
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -24,7 +24,7 @@ def test_health_check():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert "FinanceFlow API" in data["service"]
+    assert "Oria API" in data["service"]
 
 
 def test_get_transactions():

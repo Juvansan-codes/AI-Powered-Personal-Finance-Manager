@@ -1,4 +1,4 @@
-# FinanceFlow — AI-Powered Personal Finance Manager
+# Oria — AI-Powered Personal Finance Manager
 
 > **Course:** Artificial Intelligence — 25CS301  
 > **Academic Year:** 2026–27 | **Semester:** III | **Batch:** II / B2  
@@ -11,9 +11,9 @@
 
 ## 1. Project Overview
 
-FinanceFlow is an educational personal finance management platform designed to simplify tracking income and expenses through intelligent automation. 
+Oria is an educational personal finance management platform designed to simplify tracking income and expenses through intelligent automation.
 
-Traditional finance trackers require tedious manual entry and manual category selection. FinanceFlow solves this by integrating:
+Traditional finance trackers require tedious manual entry and manual category selection. Oria solves this by integrating:
 - **Voice-Powered Transaction Entry (Milestone 2):** Real-time audio recording via browser `MediaRecorder`, cloud speech-to-text using **Groq Whisper**, and structured entity extraction using **Groq LLM**.
 - **Transparent AI Categorization:** Context-aware keyword matching and ML-ready classification for transaction descriptions.
 - **Human-in-the-Loop Confirmation:** Extracted transaction drafts are presented in an editable review dialog; transactions are never saved without explicit user confirmation.
@@ -79,6 +79,26 @@ GROQ_STT_MODEL=whisper-large-v3-turbo
 GROQ_LLM_MODEL=openai/gpt-oss-20b
 CORS_ORIGINS=http://localhost:3000
 ```
+
+### Authentication and private Supabase data
+
+1. In Supabase, enable the **Email** provider under Authentication.
+2. Run [`backend/supabase_schema.sql`](backend/supabase_schema.sql) in the Supabase SQL editor. It adds `user_id` ownership, creates per-user budgets, and enables row-level security.
+3. Add the project URL and anon key to `frontend/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
+
+4. Add the same URL and a server-only service-role key to `backend/.env`:
+
+```dotenv
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+Never expose the service-role key in the frontend. Existing unowned records are intentionally not displayed; assign a `user_id` to a legacy row manually only if it belongs to that account.
 
 > **Note:** Never commit `backend/.env` containing real keys to version control. The repository includes `.env.example` with placeholder names.
 
@@ -199,7 +219,7 @@ npm run build
 
 ## 5. Machine Learning Categorization (Milestone 3)
 
-FinanceFlow features a genuine, reproducible machine learning classifier for automatic transaction categorization:
+Oria features a genuine, reproducible machine learning classifier for automatic transaction categorization:
 
 ### ML Pipeline Architecture
 - **Vectorization:** TF-IDF with word-level unigrams and bigrams (`ngram_range=(1, 2)`), sublinear term frequency scaling (`sublinear_tf=True`).

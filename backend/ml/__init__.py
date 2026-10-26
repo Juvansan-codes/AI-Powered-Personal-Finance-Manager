@@ -1,1 +1,1 @@
-# ML package for FinanceFlow transaction categorization
+# ML package for Oria transaction categorization

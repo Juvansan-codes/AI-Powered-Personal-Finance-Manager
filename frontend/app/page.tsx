@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { User } from "@supabase/supabase-js";
 import { Plus, CalendarDays, RefreshCw, Mic } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import SummaryCards from "@/components/SummaryCards";
@@ -14,6 +15,8 @@ import AnalyticsView from "@/components/AnalyticsView";
 import SettingsView from "@/components/SettingsView";
 import PetCompanion from "@/components/PetCompanion";
 import { api } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
+import AuthScreen from "@/components/AuthScreen";
 import type {
   Transaction,
   FinancialSummary,
@@ -34,6 +37,8 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState("overview");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [startWithVoice, setStartWithVoice] = useState(false);
@@ -51,6 +56,7 @@ export default function Dashboard() {
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
     try {
       setLoading(true);
       setError("");
@@ -78,11 +84,16 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (!supabase) { setAuthLoading(false); return; }
+    supabase.auth.getUser().then(({ data }) => { setUser(data.user); setAuthLoading(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => { if (user) fetchAll(); }, [user, fetchAll]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -106,6 +117,12 @@ export default function Dashboard() {
     );
   }, []);
 
+  if (authLoading) return <main className="auth-shell">Loading…</main>;
+  if (!user) return <AuthScreen />;
+
+  const accountName = user.user_metadata?.full_name || user.email?.split("@")[0] || "there";
+  const accountEmail = user.email || "";
+
   return (
     <div className="flex min-h-screen bg-[#fafafa]">
       <Sidebar
@@ -113,6 +130,8 @@ export default function Dashboard() {
         onNavigate={setCurrentPage}
         showPet={showPet}
         onTogglePet={() => setShowPet((prev) => !prev)}
+        user={user}
+        onSignOut={() => supabase?.auth.signOut()}
       />
 
       <main className="flex-1 min-w-0">
@@ -179,6 +198,7 @@ export default function Dashboard() {
               insights={insights}
               anomalies={anomalies}
               loading={loading}
+              userName={accountName}
               onNavigate={setCurrentPage}
             />
           )}
@@ -227,6 +247,8 @@ export default function Dashboard() {
           {/* 6. Settings & Model Quotas (Reference-styled) */}
           {currentPage === "settings" && (
             <SettingsView
+              userName={accountName}
+              userEmail={accountEmail}
               onRefreshData={fetchAll}
               showPet={showPet}
               onTogglePet={() => setShowPet((prev) => !prev)}

@@ -32,6 +32,7 @@ interface DashboardOverviewProps {
   insights: Insight[];
   anomalies: AnomalyItem[];
   loading: boolean;
+  userName: string;
   onNavigate: (page: string) => void;
   onOpenVoiceEntry?: () => void;
   onOpenAddTransaction?: () => void;
@@ -44,6 +45,7 @@ export default function DashboardOverview({
   insights,
   anomalies,
   loading,
+  userName,
   onNavigate,
   onOpenVoiceEntry,
   onOpenAddTransaction,
@@ -81,7 +83,7 @@ export default function DashboardOverview({
               <span className="text-xs text-neutral-400">Live Status Overview</span>
             </div>
             <h2 className="text-2xl font-bold tracking-tight">
-              Good day, E. Abishek Joseph
+              Good day, {userName}
             </h2>
             <p className="text-xs text-neutral-300 mt-1 max-w-xl leading-relaxed">
               Your financial health score is currently{" "}

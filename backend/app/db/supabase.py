@@ -1,5 +1,5 @@
 """
-Supabase PostgreSQL database adapter for FinanceFlow.
+Supabase PostgreSQL database adapter for Oria.
 
 Provides CRUD operations and analytics computations directly against Supabase
 when configured, with zero mock data.
@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 _supabase_client = None
 _tables_checked = False
 _tables_available = False
+
+DEFAULT_BUDGETS = (
+    ("Food", 5000), ("Transportation", 2000), ("Shopping", 3000),
+    ("Entertainment", 1500), ("Utilities", 2500), ("Rent", 12000),
+)
 
 
 def get_supabase_client():
@@ -76,6 +81,7 @@ def reset_supabase_cache():
 # ====================================================================
 
 def supabase_list_transactions(
+    user_id: str,
     limit: int = 100,
     offset: int = 0,
     type_filter: Optional[str] = None,
@@ -86,7 +92,7 @@ def supabase_list_transactions(
     if not client:
         return []
 
-    query = client.table("transactions").select("*")
+    query = client.table("transactions").select("*").eq("user_id", user_id)
 
     if type_filter:
         query = query.eq("type", type_filter)
@@ -98,7 +104,7 @@ def supabase_list_transactions(
     return response.data or []
 
 
-def supabase_create_transaction(txn_data: dict) -> dict:
+def supabase_create_transaction(txn_data: dict, user_id: str) -> dict:
     """Insert a new transaction into Supabase."""
     client = get_supabase_client()
     if not client:
@@ -106,6 +112,7 @@ def supabase_create_transaction(txn_data: dict) -> dict:
 
     # Format payload
     payload = {
+        "user_id": user_id,
         "description": txn_data["description"],
         "amount": float(txn_data["amount"]),
         "type": txn_data["type"],
@@ -122,13 +129,13 @@ def supabase_create_transaction(txn_data: dict) -> dict:
     return payload
 
 
-def supabase_delete_transaction(txn_id: str) -> bool:
+def supabase_delete_transaction(txn_id: str, user_id: str) -> bool:
     """Delete a transaction from Supabase by ID."""
     client = get_supabase_client()
     if not client:
         return False
 
-    res = client.table("transactions").delete().eq("id", txn_id).execute()
+    res = client.table("transactions").delete().eq("id", txn_id).eq("user_id", user_id).execute()
     return bool(res.data and len(res.data) > 0)
 
 
@@ -136,14 +143,21 @@ def supabase_delete_transaction(txn_id: str) -> bool:
 # Budget Operations
 # ====================================================================
 
-def supabase_get_budgets() -> list[dict]:
+def supabase_get_budgets(user_id: str) -> list[dict]:
     """Retrieve budgets and compute actual monthly spending from Supabase."""
     client = get_supabase_client()
     if not client:
         return []
 
-    budgets_res = client.table("budgets").select("*").execute()
+    budgets_res = client.table("budgets").select("*").eq("user_id", user_id).execute()
     budgets = budgets_res.data or []
+    if not budgets:
+        payload = [
+            {"user_id": user_id, "category": category, "budget_limit": limit, "period": "monthly"}
+            for category, limit in DEFAULT_BUDGETS
+        ]
+        created = client.table("budgets").insert(payload).execute()
+        budgets = created.data or []
 
     # Get current month prefix: YYYY-MM
     now_prefix = datetime.now().strftime("%Y-%m")
@@ -151,6 +165,7 @@ def supabase_get_budgets() -> list[dict]:
     # Query expense transactions for the current month
     txns_res = client.table("transactions") \
         .select("category, amount") \
+        .eq("user_id", user_id) \
         .eq("type", "expense") \
         .gte("date", f"{now_prefix}-01") \
         .lte("date", f"{now_prefix}-31") \
@@ -186,13 +201,13 @@ def supabase_get_budgets() -> list[dict]:
 # Analytics Operations
 # ====================================================================
 
-def supabase_get_summary() -> dict:
+def supabase_get_summary(user_id: str) -> dict:
     """Compute financial summary (income, expenses, balance, savings rate)."""
     client = get_supabase_client()
     if not client:
         return {"total_income": 0.0, "total_expenses": 0.0, "balance": 0.0, "savings_rate": 0.0}
 
-    res = client.table("transactions").select("type, amount").execute()
+    res = client.table("transactions").select("type, amount").eq("user_id", user_id).execute()
     rows = res.data or []
 
     total_income = sum(float(r["amount"]) for r in rows if r["type"] == "income")
@@ -208,13 +223,13 @@ def supabase_get_summary() -> dict:
     }
 
 
-def supabase_get_category_spending() -> list[dict]:
+def supabase_get_category_spending(user_id: str) -> list[dict]:
     """Compute expense category breakdown."""
     client = get_supabase_client()
     if not client:
         return []
 
-    res = client.table("transactions").select("category, amount").eq("type", "expense").execute()
+    res = client.table("transactions").select("category, amount").eq("user_id", user_id).eq("type", "expense").execute()
     rows = res.data or []
 
     totals = {}
@@ -226,13 +241,13 @@ def supabase_get_category_spending() -> list[dict]:
     return [{"category": cat, "amount": round(amt, 2)} for cat, amt in sorted_cats]
 
 
-def supabase_get_monthly_trend() -> list[dict]:
+def supabase_get_monthly_trend(user_id: str) -> list[dict]:
     """Compute monthly trend of income and expenses."""
     client = get_supabase_client()
     if not client:
         return []
 
-    res = client.table("transactions").select("date, type, amount").execute()
+    res = client.table("transactions").select("date, type, amount").eq("user_id", user_id).execute()
     rows = res.data or []
 
     months = {}
@@ -256,13 +271,13 @@ def supabase_get_monthly_trend() -> list[dict]:
     ]
 
 
-def supabase_get_insights() -> list[dict]:
+def supabase_get_insights(user_id: str) -> list[dict]:
     """Compute financial health insights from Supabase transactions."""
     client = get_supabase_client()
     if not client:
         return []
 
-    res = client.table("transactions").select("*").execute()
+    res = client.table("transactions").select("*").eq("user_id", user_id).execute()
     rows = res.data or []
 
     if not rows:

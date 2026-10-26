@@ -1,5 +1,6 @@
 """Analytics API routes — Supports Supabase with SQLite fallback."""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.auth import require_user
 from app.db.database import get_connection
 from app.db.supabase import (
     is_supabase_ready,
@@ -22,10 +23,10 @@ from app.ai.anomaly_detector import (
 router = APIRouter()
 
 
-def _fetch_all_transactions() -> list[dict]:
+def _fetch_all_transactions(user_id: str) -> list[dict]:
     """Fetch raw transaction dictionaries from active store (Supabase or SQLite)."""
     if is_supabase_ready():
-        return supabase_list_transactions(limit=500)
+        return supabase_list_transactions(user_id=user_id, limit=500)
 
     conn = get_connection()
     rows = conn.execute("SELECT * FROM transactions ORDER BY date DESC").fetchall()
@@ -34,10 +35,10 @@ def _fetch_all_transactions() -> list[dict]:
 
 
 @router.get("/summary")
-def get_summary():
+def get_summary(user_id: str = Depends(require_user)):
     """Financial summary: total income, expenses, balance, savings rate."""
     if is_supabase_ready():
-        return supabase_get_summary()
+        return supabase_get_summary(user_id)
 
     conn = get_connection()
     row = conn.execute("""
@@ -62,10 +63,10 @@ def get_summary():
 
 
 @router.get("/category-spending")
-def get_category_spending():
+def get_category_spending(user_id: str = Depends(require_user)):
     """Spending breakdown by category."""
     if is_supabase_ready():
-        return supabase_get_category_spending()
+        return supabase_get_category_spending(user_id)
 
     conn = get_connection()
     rows = conn.execute("""
@@ -80,10 +81,10 @@ def get_category_spending():
 
 
 @router.get("/monthly-trend")
-def get_monthly_trend():
+def get_monthly_trend(user_id: str = Depends(require_user)):
     """Monthly income vs expense trend."""
     if is_supabase_ready():
-        return supabase_get_monthly_trend()
+        return supabase_get_monthly_trend(user_id)
 
     conn = get_connection()
     rows = conn.execute("""
@@ -107,10 +108,10 @@ def get_monthly_trend():
 
 
 @router.get("/insights")
-def get_insights():
+def get_insights(user_id: str = Depends(require_user)):
     """AI-style insights derived from actual transaction data."""
     if is_supabase_ready():
-        return supabase_get_insights()
+        return supabase_get_insights(user_id)
 
     conn = get_connection()
 
@@ -185,7 +186,7 @@ def get_insights():
         })
 
     # AI Anomaly Detection insight
-    txns = _fetch_all_transactions()
+    txns = _fetch_all_transactions(user_id)
     anomaly_report = detect_spending_anomalies(txns)
     if anomaly_report.anomalies_detected > 0:
         top_anomaly = anomaly_report.anomalies[0]
@@ -200,16 +201,16 @@ def get_insights():
 
 
 @router.get("/anomalies", response_model=AnomalyReport)
-def get_anomalies():
+def get_anomalies(user_id: str = Depends(require_user)):
     """Scan all historical expenses and return detected spending anomalies."""
-    txns = _fetch_all_transactions()
+    txns = _fetch_all_transactions(user_id)
     return detect_spending_anomalies(txns)
 
 
 @router.post("/anomalies/check", response_model=AnomalyCheckResponse)
-def check_anomaly(req: AnomalyCheckRequest):
+def check_anomaly(req: AnomalyCheckRequest, user_id: str = Depends(require_user)):
     """Real-time anomaly evaluation for an incoming or draft transaction."""
-    txns = _fetch_all_transactions()
+    txns = _fetch_all_transactions(user_id)
     return check_transaction_anomaly(
         amount=req.amount,
         category=req.category,

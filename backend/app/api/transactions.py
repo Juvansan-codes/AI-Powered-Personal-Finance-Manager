@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from app.auth import require_user
 
 from app.db.database import get_connection
 from app.db.supabase import (
@@ -23,10 +24,12 @@ def list_transactions(
     offset: int = Query(0, ge=0),
     type: Optional[str] = Query(None, pattern="^(income|expense)$"),
     category: Optional[str] = None,
+    user_id: str = Depends(require_user),
 ):
     """List transactions with optional filtering."""
     if is_supabase_ready():
         rows = supabase_list_transactions(
+            user_id=user_id,
             limit=limit,
             offset=offset,
             type_filter=type,
@@ -78,7 +81,7 @@ def list_transactions(
 
 
 @router.post("/", response_model=TransactionResponse, status_code=201)
-def create_transaction(txn: TransactionCreate):
+def create_transaction(txn: TransactionCreate, user_id: str = Depends(require_user)):
     """Create a new transaction."""
     txn_id = str(uuid.uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
@@ -93,7 +96,7 @@ def create_transaction(txn: TransactionCreate):
             "date": txn.date,
             "created_at": created_at,
             "is_sample": 0,
-        })
+        }, user_id)
         return TransactionResponse(
             id=str(record.get("id", txn_id)),
             description=record["description"],
@@ -126,10 +129,10 @@ def create_transaction(txn: TransactionCreate):
 
 
 @router.delete("/{transaction_id}", status_code=204)
-def delete_transaction(transaction_id: str):
+def delete_transaction(transaction_id: str, user_id: str = Depends(require_user)):
     """Delete a transaction by ID."""
     if is_supabase_ready():
-        deleted = supabase_delete_transaction(transaction_id)
+        deleted = supabase_delete_transaction(transaction_id, user_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Transaction not found")
         return None

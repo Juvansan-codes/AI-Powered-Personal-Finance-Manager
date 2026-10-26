@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 DB_DIR = Path(__file__).resolve().parent.parent.parent / "data"
-DB_PATH = DB_DIR / "financeflow.db"
+DB_PATH = DB_DIR / "oria.db"
 
 
 def get_connection() -> sqlite3.Connection:

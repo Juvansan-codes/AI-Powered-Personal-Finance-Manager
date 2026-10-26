@@ -2,7 +2,7 @@
 Model Training Script — TF-IDF + Logistic Regression Transaction Classifier.
 
 This script trains a scikit-learn pipeline for categorizing transaction descriptions
-into the FinanceFlow category taxonomy. It uses TF-IDF vectorization with word-level
+into the Oria category taxonomy. It uses TF-IDF vectorization with word-level
 n-grams (unigrams + bigrams) and Logistic Regression.
 
 Dataset: Curated synthetic training data (not real financial data).
@@ -253,7 +253,7 @@ def save_artifacts(pipeline, metadata: dict):
 
 def main():
     print("=" * 60)
-    print("FinanceFlow - ML Transaction Categorizer Training")
+    print("Oria - ML Transaction Categorizer Training")
     print("=" * 60)
     print(f"Dataset: {DATA_PATH}")
     print(f"Random Seed: {RANDOM_SEED}")

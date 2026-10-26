@@ -26,7 +26,7 @@ const INITIAL_MESSAGE: AssistantChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hello! I'm your **FinanceFlow AI Assistant**, powered by Groq. I can directly inspect your income, spending breakdowns, category budgets, and run **what-if purchase simulations** using live data. What would you like to explore today?",
+    "Hello! I'm your **Oria AI Assistant**, powered by Groq. I can directly inspect your income, spending breakdowns, category budgets, and run **what-if purchase simulations** using live data. What would you like to explore today?",
   timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
 };
 

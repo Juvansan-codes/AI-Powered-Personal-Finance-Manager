@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "openai/gpt-oss-20b")
 
 # System prompt defining persona, boundaries, and formatting rules
-ASSISTANT_SYSTEM_PROMPT = """You are FinanceFlow AI — an intelligent, empathetic, and prudent personal finance assistant.
+ASSISTANT_SYSTEM_PROMPT = """You are Oria AI — an intelligent, empathetic, and prudent personal finance assistant.
 Your goal is to help the user understand their income, spending patterns, budgets, and evaluate financial decisions.
 
 STRICT ENGINEERING AND BEHAVIORAL RULES:
@@ -37,6 +37,7 @@ STRICT ENGINEERING AND BEHAVIORAL RULES:
 5. Provide concise, clear, and actionable insights. Use markdown bullet points and bold numbers for readability.
 6. If the user's query is conversational (e.g., "Hello", "Who are you?", "What can you do?"), reply politely and introduce your capabilities without needing to call financial tools.
 7. Emphasize that you provide educational guidance, not certified investment, legal, or tax advice.
+8. An empty list from a financial-data tool means there are no matching records, not that the data is inaccessible. State that clearly and suggest recording an entry when appropriate.
 """
 
 # Tool schemas adhering to OpenAI / Groq tool specification
@@ -123,10 +124,10 @@ TOOLS_SPEC = [
 # Deterministic Tool Implementations
 # =====================================================================
 
-def tool_get_financial_summary() -> dict[str, Any]:
+def tool_get_financial_summary(user_id: str) -> dict[str, Any]:
     """Retrieve financial summary from Supabase or fallback to SQLite."""
     if is_supabase_ready():
-        data = supabase_get_summary()
+        data = supabase_get_summary(user_id)
         rate = data.get("savings_rate", 0.0)
         data["savings_rate_percent"] = rate
         data["savings_rate"] = rate
@@ -155,10 +156,10 @@ def tool_get_financial_summary() -> dict[str, Any]:
     }
 
 
-def tool_get_category_spending() -> list[dict[str, Any]]:
+def tool_get_category_spending(user_id: str) -> list[dict[str, Any]]:
     """Retrieve category expense breakdown."""
     if is_supabase_ready():
-        return supabase_get_category_spending()
+        return supabase_get_category_spending(user_id)
 
     conn = get_connection()
     rows = conn.execute("""
@@ -173,6 +174,7 @@ def tool_get_category_spending() -> list[dict[str, Any]]:
 
 
 def tool_get_recent_transactions(
+    user_id: str,
     limit: int = 6,
     type_filter: Optional[str] = None,
     category: Optional[str] = None,
@@ -182,7 +184,7 @@ def tool_get_recent_transactions(
 
     if is_supabase_ready():
         raw = supabase_list_transactions(
-            limit=clean_limit,
+            user_id=user_id, limit=clean_limit,
             type_filter=type_filter,
             category_filter=category,
         )
@@ -228,11 +230,11 @@ def tool_get_recent_transactions(
     ]
 
 
-def tool_get_budget_status() -> list[dict[str, Any]]:
+def tool_get_budget_status(user_id: str) -> list[dict[str, Any]]:
     """Compare category budgets against actual spending."""
     if is_supabase_ready():
-        budgets_raw = supabase_get_budgets()
-        spending_raw = supabase_get_category_spending()
+        budgets_raw = supabase_get_budgets(user_id)
+        spending_raw = supabase_get_category_spending(user_id)
     else:
         conn = get_connection()
         b_rows = conn.execute("SELECT category, budget_limit FROM budgets").fetchall()
@@ -268,6 +270,7 @@ def tool_get_budget_status() -> list[dict[str, Any]]:
 
 
 def tool_simulate_purchase(
+    user_id: str,
     item_name: str,
     amount: float,
     category: Optional[str] = "Shopping",
@@ -277,12 +280,12 @@ def tool_simulate_purchase(
     Checks remaining net balance, relevant category budget impact, and generates a verdict.
     """
     purchase_amt = abs(float(amount))
-    summary = tool_get_financial_summary()
+    summary = tool_get_financial_summary(user_id)
     current_balance = float(summary.get("balance", 0))
     new_balance = round(current_balance - purchase_amt, 2)
 
     cat_name = category or "Shopping"
-    budget_statuses = tool_get_budget_status()
+    budget_statuses = tool_get_budget_status(user_id)
     matched_budget = next(
         (b for b in budget_statuses if b["category"].lower() == cat_name.lower()),
         None
@@ -330,23 +333,23 @@ def tool_simulate_purchase(
     }
 
 
-def execute_tool(tool_name: str, arguments: dict[str, Any]) -> Any:
+def execute_tool(tool_name: str, arguments: dict[str, Any], user_id: str) -> Any:
     """Dispatch tool execution to deterministic Python functions."""
     if tool_name == "get_financial_summary":
-        return tool_get_financial_summary()
+        return tool_get_financial_summary(user_id)
     elif tool_name == "get_category_spending":
-        return tool_get_category_spending()
+        return tool_get_category_spending(user_id)
     elif tool_name == "get_recent_transactions":
         return tool_get_recent_transactions(
-            limit=arguments.get("limit", 6),
+            user_id=user_id, limit=arguments.get("limit", 6),
             type_filter=arguments.get("type_filter"),
             category=arguments.get("category"),
         )
     elif tool_name == "get_budget_status":
-        return tool_get_budget_status()
+        return tool_get_budget_status(user_id)
     elif tool_name == "simulate_purchase":
         return tool_simulate_purchase(
-            item_name=arguments.get("item_name", "Item"),
+            user_id=user_id, item_name=arguments.get("item_name", "Item"),
             amount=arguments.get("amount", 0.0),
             category=arguments.get("category", "Shopping"),
         )
@@ -361,6 +364,7 @@ def execute_tool(tool_name: str, arguments: dict[str, Any]) -> Any:
 def run_financial_assistant(
     user_message: str,
     conversation_history: Optional[List[dict]] = None,
+    user_id: str = "",
 ) -> dict[str, Any]:
     """
     Execute tool-calling agent loop with Groq LLM.
@@ -400,6 +404,10 @@ def run_financial_assistant(
     api_messages.append({"role": "user", "content": clean_prompt})
 
     tools_used_records: list[dict[str, Any]] = []
+    # Keep the real deterministic results separate from the public metadata.
+    # ToolExecution intentionally exposes only metadata to the browser, while
+    # recovery still needs the actual data in order to form a useful answer.
+    tool_results: list[dict[str, Any]] = []
     final_reply: str = ""
     max_turns = 5
 
@@ -431,13 +439,21 @@ def run_financial_assistant(
                     t_args = {}
 
                 logger.info(f"AI Assistant turn {turn + 1} executing tool: {t_name} with args: {t_args}")
-                tool_output = execute_tool(t_name, t_args)
+                try:
+                    tool_output = execute_tool(t_name, t_args, user_id)
+                except Exception as tool_error:
+                    logger.exception("Assistant tool %s failed", t_name)
+                    tool_output = {
+                        "error": "The financial data query could not be completed.",
+                        "details": str(tool_error),
+                    }
 
                 tools_used_records.append({
                     "tool_name": t_name,
                     "arguments": t_args,
                     "summary": f"Executed {t_name}",
                 })
+                tool_results.append({"tool_name": t_name, "data": tool_output})
 
                 api_messages.append({
                     "role": "tool",
@@ -446,19 +462,12 @@ def run_financial_assistant(
                     "content": json.dumps(tool_output),
                 })
 
-            # If approaching max_turns, prompt model to synthesize answer without further tool calls
-            if turn == max_turns - 2:
-                api_messages.append({
-                    "role": "user",
-                    "content": "You now have all the necessary financial information. Please synthesize your complete final answer and recommendations for the user now without calling any additional tools.",
-                })
         else:
-            # If all turns exhausted and final_reply not yet produced, request synthesis
+            # Guarantee a final natural-language answer instead of allowing one
+            # more tool call and returning an empty message.
             final_response = client.chat.completions.create(
                 model=llm_model,
                 messages=api_messages,
-                tools=TOOLS_SPEC,
-                tool_choice="auto",
                 temperature=0.2,
             )
             final_reply = final_response.choices[0].message.content or "Here is what I found for your request based on your financial records."
@@ -480,7 +489,7 @@ def run_financial_assistant(
                         {"role": "system", "content": ASSISTANT_SYSTEM_PROMPT},
                         {
                             "role": "user",
-                            "content": f"The user asked: '{clean_prompt}'. Here is their financial data: {json.dumps(tools_used_records)}. Please answer the user's question clearly with actionable advice and markdown formatting without calling any tools.",
+                            "content": f"The user asked: '{clean_prompt}'. Here are the actual results returned by the financial tools: {json.dumps(tool_results)}. Please answer the user's question clearly with actionable advice and markdown formatting without calling any tools. An empty list means there are no matching records; do not describe it as an access failure.",
                         },
                     ]
                     recov_resp = client.chat.completions.create(

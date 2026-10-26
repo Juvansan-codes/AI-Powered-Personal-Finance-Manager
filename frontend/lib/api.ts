@@ -1,4 +1,5 @@
 import { API_BASE } from "./utils";
+import { supabase } from "./supabase";
 import type {
   Transaction,
   TransactionCreate,
@@ -19,8 +20,10 @@ import type {
 } from "@/types";
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
+  const { data } = await supabase?.auth.getSession() ?? { data: { session: null } };
+  const token = data.session?.access_token;
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...options,
   });
   if (!res.ok) {
@@ -68,12 +71,27 @@ export const api = {
   // Voice-Powered Transactions
   transcribeAudio: async (audioBlob: Blob): Promise<TranscriptionResponse> => {
     const formData = new FormData();
-    const ext = audioBlob.type.includes("wav") ? "wav" : "webm";
+    // The file extension is used by the transcription service to identify the
+    // container. Do not label an MP4/Safari recording as WebM.
+    const mimeType = audioBlob.type.toLowerCase();
+    const ext = mimeType.includes("wav")
+      ? "wav"
+      : mimeType.includes("mp4") || mimeType.includes("m4a")
+        ? "mp4"
+        : mimeType.includes("mpeg") || mimeType.includes("mp3")
+          ? "mp3"
+          : mimeType.includes("ogg")
+            ? "ogg"
+            : mimeType.includes("flac")
+              ? "flac"
+              : "webm";
     formData.append("file", audioBlob, `recording.${ext}`);
 
+    const { data } = await supabase?.auth.getSession() ?? { data: { session: null } };
     const res = await fetch(`${API_BASE}/api/voice/transcribe`, {
       method: "POST",
       body: formData,
+      headers: data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : undefined,
     });
     if (!res.ok) {
       let errorMsg = `Error ${res.status}`;

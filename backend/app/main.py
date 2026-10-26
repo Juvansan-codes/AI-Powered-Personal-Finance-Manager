@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FinanceFlow API",
+    title="Oria API",
     description="AI-Powered Personal Finance Manager",
     version="0.1.0",
     lifespan=lifespan,
@@ -64,7 +64,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "FinanceFlow API"}
+    return {"status": "healthy", "service": "Oria API"}
 
 
 app.include_router(transactions_router, prefix="/api/transactions", tags=["Transactions"])

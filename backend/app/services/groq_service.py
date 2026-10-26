@@ -53,6 +53,39 @@ def get_groq_client():
         raise GroqServiceError("Groq SDK is not installed on the server.", status_code=500)
 
 
+SILENCE_HALLUCINATIONS = {
+    "thank you.",
+    "thank you",
+    "thank you!",
+    "thanks for watching.",
+    "thanks for watching!",
+    "thank you for watching.",
+    "thank you for watching!",
+    "subtitles by the amara.org community",
+    "subtitles by",
+    "please subscribe",
+    "subscribe to my channel",
+    "bye.",
+    "bye",
+    "you",
+    ".",
+    "",
+}
+
+
+def is_silence_hallucination(text: str) -> bool:
+    """Check if transcribed text is a well-known Whisper hallucination caused by silence or low audio."""
+    cleaned = text.strip().lower()
+    if not cleaned:
+        return True
+    if cleaned in SILENCE_HALLUCINATIONS:
+        return True
+    stripped = cleaned.strip(".!,? ")
+    if stripped in {"thank you", "thanks for watching", "thank you for watching", "subtitles by", "please subscribe", "bye"}:
+        return True
+    return False
+
+
 def transcribe_audio(
     file_bytes: bytes,
     filename: str = "audio.webm",
@@ -81,13 +114,31 @@ def transcribe_audio(
     try:
         # Pass file tuple: (filename, bytes, content_type)
         file_payload = (filename, file_bytes) if not content_type else (filename, file_bytes, content_type)
+        
+        # Financial context prompt helps Whisper bias toward transaction terms and prevents silence hallucinations
+        transcription_prompt = (
+            "Financial transactions, income and expenses: spent rupees, dollars, paid for groceries, "
+            "food, shopping, rent, electricity, dinner, coffee, received salary, stipend."
+        )
+
         response = client.audio.transcriptions.create(
             file=file_payload,
             model=stt_model,
             response_format="json",
+            temperature=0.0,
+            prompt=transcription_prompt,
         )
         text = response.text.strip() if hasattr(response, "text") else str(response).strip()
+        
+        if is_silence_hallucination(text):
+            raise GroqServiceError(
+                "No clear speech was detected in your recording. Please check your microphone volume or speak closer to the mic.",
+                status_code=400,
+            )
+
         return text
+    except GroqServiceError:
+        raise
     except Exception as e:
         err_str = str(e).lower()
         if "rate limit" in err_str or "429" in err_str:
@@ -113,13 +164,13 @@ def extract_transaction_from_text(
         Dictionary adhering to VoiceExtractResponse schema.
     """
     clean_text = text.strip()
-    if not clean_text:
+    if not clean_text or is_silence_hallucination(clean_text):
         return {
             "is_complete": False,
             "missing_fields": ["description", "amount", "type"],
-            "clarification_needed": "No speech text provided.",
+            "clarification_needed": "No transaction details detected. Please mention the amount and item/purpose (e.g., 'Spent 200 on dinner').",
             "draft": None,
-            "raw_text": "",
+            "raw_text": clean_text,
         }
 
     # Default to today's date if reference date is not provided or invalid

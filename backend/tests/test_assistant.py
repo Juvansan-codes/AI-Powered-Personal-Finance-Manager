@@ -114,3 +114,39 @@ def test_assistant_chat_endpoint_mocked():
         data = res.json()
         assert data["reply"] == "Your current financial health is strong!"
         assert isinstance(data["suggestions"], list)
+
+
+def test_assistant_recovery_keeps_actual_tool_results():
+    """A tool-call protocol failure must not discard the financial result."""
+    tool_call = MagicMock()
+    tool_call.id = "tool_1"
+    tool_call.function.name = "get_category_spending"
+    tool_call.function.arguments = "{}"
+
+    tool_message = MagicMock()
+    tool_message.tool_calls = [tool_call]
+    tool_message.content = None
+
+    first_response = MagicMock()
+    first_response.choices = [MagicMock(message=tool_message)]
+
+    recovery_response = MagicMock()
+    recovery_response.choices = [MagicMock(message=MagicMock(content="No expense entries have been recorded yet."))]
+
+    with patch("app.ai.financial_assistant.get_groq_client") as mock_get_client, \
+         patch("app.ai.financial_assistant.execute_tool", return_value=[]) as mock_tool:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
+            first_response,
+            Exception("tool_use_failed"),
+            recovery_response,
+        ]
+        mock_get_client.return_value = mock_client
+
+        result = run_financial_assistant("Show my category spending")
+
+        assert result["reply"] == "No expense entries have been recorded yet."
+        assert mock_tool.called
+        recovery_call = mock_client.chat.completions.create.call_args_list[-1]
+        recovery_content = recovery_call.kwargs["messages"][1]["content"]
+        assert '"data": []' in recovery_content
