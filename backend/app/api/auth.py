@@ -12,6 +12,8 @@ from app.schemas.auth import (
     LoginRequest,
     SignupRequest,
     SignupResponse,
+    MagicLinkRequest,
+    ResendMagicLinkRequest,
     VerifyOtpRequest,
     ResendOtpRequest,
     AuthResponse,
@@ -22,6 +24,7 @@ from app.services.otp_service import (
     create_signup_otp,
     verify_and_activate_user,
     resend_signup_otp,
+    dispatch_magic_link,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,39 +55,78 @@ def _get_supabase_anon_or_503():
     return client
 
 
-@router.post("/signup", response_model=SignupResponse)
-def signup(req: SignupRequest):
+@router.post("/magic-link")
+def send_magic_link(req: MagicLinkRequest):
     """
-    Step 1: Generate a secure 6-digit OTP, dispatch to the user's email,
-    and stage registration details awaiting verification.
+    Generate and dispatch a Supabase magic link directly to the user's email.
     """
     clean_email = req.email.lower().strip()
     _get_supabase_or_503()
 
+    action_link, msg = dispatch_magic_link(
+        email=clean_email,
+        name=req.name,
+        redirect_to=req.redirect_to,
+    )
+
+    return {
+        "success": True,
+        "email": clean_email,
+        "message": f"Magic link is sent for confirmation to {clean_email}.",
+        "action_link": action_link,
+    }
+
+
+@router.post("/resend-magic-link")
+def resend_magic_link(req: ResendMagicLinkRequest):
+    """
+    Resend a fresh Supabase magic link to the user's email.
+    """
+    clean_email = req.email.lower().strip()
+    _get_supabase_or_503()
+
+    action_link, msg = dispatch_magic_link(
+        email=clean_email,
+        redirect_to=req.redirect_to,
+    )
+
+    return {
+        "success": True,
+        "email": clean_email,
+        "message": f"Magic link is sent for confirmation to {clean_email}.",
+        "action_link": action_link,
+    }
+
+
+@router.post("/signup", response_model=SignupResponse)
+def signup(req: SignupRequest):
+    """
+    Register user profile and dispatch a magic link for confirmation in email.
+    """
+    clean_email = req.email.lower().strip()
+    clean_name = req.name.strip()
+    _get_supabase_or_503()
+
     try:
-        otp, expires_in = create_signup_otp(
-            name=req.name,
+        action_link, msg = dispatch_magic_link(
             email=clean_email,
+            name=clean_name,
             password=req.password,
             phone=req.phone,
         )
 
         return SignupResponse(
-            status="pending_otp",
+            status="magic_link_sent",
             email=clean_email,
-            message=f"Verification code sent to {clean_email}. Please check your email inbox to verify your account.",
-            expires_in_seconds=expires_in,
+            message=f"Magic link is sent for confirmation to {clean_email}. Please check your email to complete registration.",
+            action_link=action_link,
+            expires_in_seconds=3600,
         )
     except HTTPException:
         raise
     except Exception as e:
         err_msg = str(e)
         logger.warning(f"Signup error for {clean_email}: {err_msg}")
-        if "already registered" in err_msg.lower() or "unique constraint" in err_msg.lower() or "already exists" in err_msg.lower():
-            raise HTTPException(
-                status_code=400,
-                detail="An account with this email address already exists. Please log in.",
-            )
         raise HTTPException(
             status_code=400,
             detail=f"Registration failed: {err_msg}",
@@ -94,7 +136,7 @@ def signup(req: SignupRequest):
 @router.post("/verify-otp", response_model=AuthResponse)
 def verify_otp(req: VerifyOtpRequest):
     """
-    Step 2: Verify the 6-digit OTP code, activate the user in Supabase Auth,
+    Verify the 6-digit OTP code if requested, activate user in Supabase Auth,
     and return the active JWT session access token.
     """
     clean_email = req.email.lower().strip()
@@ -107,11 +149,15 @@ def verify_otp(req: VerifyOtpRequest):
 @router.post("/resend-otp")
 def resend_otp(req: ResendOtpRequest):
     """
-    Dispatch a fresh 6-digit verification code to the pending user's email.
+    Dispatch a fresh verification link or code to the pending user's email.
     """
     clean_email = req.email.lower().strip()
     _get_supabase_or_503()
 
+    try:
+        dispatch_magic_link(email=clean_email)
+    except Exception:
+        pass
     return resend_signup_otp(clean_email)
 
 

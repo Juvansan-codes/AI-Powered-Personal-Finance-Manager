@@ -138,13 +138,29 @@ export const api = {
       method: "POST",
     }),
 
-  // Authentication & OTP Verification
+  // Authentication & Magic Link
   login: (data: { email: string; password: string }) =>
     fetchJSON<AuthResponse>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  signup: (data: { name: string; email: string; password: string; phone?: string }) =>
+  sendMagicLink: (data: { email: string; name?: string; redirect_to?: string }) =>
+    fetchJSON<{ success: boolean; email: string; message: string; action_link?: string }>(
+      "/api/auth/magic-link",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
+  resendMagicLink: (email: string, redirect_to?: string) =>
+    fetchJSON<{ success: boolean; email: string; message: string; action_link?: string }>(
+      "/api/auth/resend-magic-link",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, redirect_to }),
+      }
+    ),
+  signup: (data: { name: string; email: string; password?: string; phone?: string }) =>
     fetchJSON<SignupResponse>("/api/auth/signup", {
       method: "POST",
       body: JSON.stringify(data),

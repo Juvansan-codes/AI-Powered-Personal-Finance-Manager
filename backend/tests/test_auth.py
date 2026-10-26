@@ -51,7 +51,7 @@ def test_signup_returns_pending_otp():
     # Could be 200 (success) or 400 (Supabase rate limit / config issue)
     if res.status_code == 200:
         data = res.json()
-        assert data["status"] in ("pending_otp", "active")
+        assert data["status"] in ("magic_link_sent", "pending_otp", "active")
         assert data["email"] == unique_email
         assert "demo_otp" not in data  # No mock OTPs
     else:

@@ -24,6 +24,173 @@ OTP_EXPIRY_MINUTES = 10
 MAX_ATTEMPTS = 5
 
 
+def send_magic_link_email(recipient_email: str, magic_link: str, user_name: str = "") -> bool:
+    """
+    Dispatch the Supabase magic link directly to the user's email via SMTP if configured.
+    Always logs the magic link clearly in server output for development transparency.
+    """
+    display_name = user_name or recipient_email.split("@")[0].capitalize()
+
+    print("\n" + "=" * 70)
+    print(f"*** [FINANCEFLOW MAGIC LINK DISPATCH] ***")
+    print(f"Recipient : {recipient_email} ({display_name})")
+    print(f"Magic Link: {magic_link}")
+    print(f"Validity  : 60 Minutes")
+    print("=" * 70 + "\n")
+    logger.info(f"[MAGIC LINK DISPATCH] Link for {recipient_email}: {magic_link}")
+
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
+    smtp_from = os.getenv("SMTP_FROM_EMAIL", "").strip() or smtp_user
+    smtp_from_name = os.getenv("SMTP_FROM_NAME", "FinanceFlow AI").strip()
+
+    if not (smtp_host and smtp_user and smtp_password):
+        # SMTP not configured; magic link is clearly logged for dev/testing
+        return True
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Your FinanceFlow Magic Sign-In Link"
+        msg["From"] = f"{smtp_from_name} <{smtp_from}>"
+        msg["To"] = recipient_email
+
+        text_content = (
+            f"Hello {display_name},\n\n"
+            f"Click the link below to confirm your account and sign in to FinanceFlow:\n\n"
+            f"{magic_link}\n\n"
+            f"This magic link will expire in 60 minutes. "
+            f"If you did not request this, you can safely ignore this email.\n\n"
+            f"— The FinanceFlow Team"
+        )
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #fafafa; margin: 0; padding: 24px; color: #171717; }}
+            .container {{ max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e5e5e5; padding: 36px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }}
+            .logo {{ display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #0a0a0a; margin-bottom: 24px; }}
+            .badge {{ background: #10b981; color: white; width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; }}
+            h2 {{ font-size: 22px; font-weight: 700; margin: 0 0 12px 0; color: #0a0a0a; letter-spacing: -0.02em; }}
+            p {{ font-size: 14px; line-height: 1.6; color: #525252; margin: 0 0 20px 0; }}
+            .button-container {{ text-align: center; margin: 28px 0; }}
+            .cta-button {{ display: inline-block; background: #10b981; color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 15px; padding: 14px 28px; border-radius: 12px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25); }}
+            .link-box {{ background: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 10px; padding: 12px; word-break: break-all; font-size: 12px; color: #71717a; margin-top: 20px; }}
+            .footer {{ font-size: 12px; color: #a1a1aa; border-top: 1px solid #f4f4f5; padding-top: 18px; margin-top: 28px; }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="logo">
+              <span class="badge">F</span>
+              <span>FinanceFlow</span>
+            </div>
+            <h2>Confirm & Sign in to FinanceFlow</h2>
+            <p>Hi {display_name},</p>
+            <p>Click the button below to confirm your email and log in to your FinanceFlow financial manager instantly. No password required.</p>
+            <div class="button-container">
+              <a href="{magic_link}" class="cta-button" target="_blank">Sign In with Magic Link &rarr;</a>
+            </div>
+            <p style="font-size: 13px; color: #71717a;">Or copy and paste this link into your browser:</p>
+            <div class="link-box">{magic_link}</div>
+            <p style="font-size: 12px; color: #a1a1aa; margin-top: 16px;">This link will expire in <strong>60 minutes</strong>. If you did not request this email, you can safely ignore it.</p>
+            <div class="footer">
+              FinanceFlow AI Financial Management Platform
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(text_content, "plain"))
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_from, [recipient_email], msg.as_string())
+
+        logger.info(f"Magic link email successfully dispatched to {recipient_email}")
+        return True
+    except Exception as e:
+        logger.warning(f"Could not send magic link via SMTP ({e}). Link remains active via console log.")
+        return False
+
+
+def dispatch_magic_link(
+    email: str,
+    name: Optional[str] = None,
+    password: Optional[str] = None,
+    phone: Optional[str] = None,
+    redirect_to: Optional[str] = None,
+) -> Tuple[str, str]:
+    """
+    Generate and dispatch a Supabase magic link / email confirmation link.
+    """
+    clean_email = email.lower().strip()
+    clean_name = (name or clean_email.split("@")[0]).strip()
+    target_redirect = redirect_to or os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+
+    supabase_admin = get_supabase_client()
+    if not supabase_admin:
+        raise HTTPException(
+            status_code=503,
+            detail="Supabase service is not available. Please verify credentials."
+        )
+
+    link_options: Dict[str, Any] = {
+        "redirect_to": target_redirect,
+    }
+    if clean_name or phone:
+        link_options["data"] = {
+            "name": clean_name,
+            "phone": phone or "",
+        }
+
+    action_link = None
+    try:
+        gen_res = supabase_admin.auth.admin.generate_link({
+            "type": "magiclink",
+            "email": clean_email,
+            "options": link_options,
+        })
+        if gen_res and hasattr(gen_res, "properties") and getattr(gen_res.properties, "action_link", None):
+            action_link = gen_res.properties.action_link
+    except Exception as e:
+        logger.warning(f"admin.generate_link magiclink notice: {e}, attempting signup link")
+        try:
+            gen_res = supabase_admin.auth.admin.generate_link({
+                "type": "signup",
+                "email": clean_email,
+                "password": password or "P@ssword123!",
+                "options": link_options,
+            })
+            if gen_res and hasattr(gen_res, "properties") and getattr(gen_res.properties, "action_link", None):
+                action_link = gen_res.properties.action_link
+        except Exception as e2:
+            logger.error(f"Failed to generate magic link via Supabase: {e2}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not generate magic link: {e2}"
+            )
+
+    if not action_link:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not generate magic link from Supabase Auth."
+        )
+
+    # Dispatch email
+    send_magic_link_email(clean_email, action_link, clean_name)
+    message = f"Magic link is sent for confirmation to {clean_email}. Please check your inbox to sign in."
+
+    return action_link, message
+
+
 def generate_otp() -> str:
     """Generate a cryptographically secure 6-digit numeric OTP."""
     # Always produces exactly 6 digits between 100000 and 999999

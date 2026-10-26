@@ -45,6 +45,29 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Check if user arrived via Supabase Magic Link
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=")) {
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+        const hashToken = hashParams.get("access_token");
+        if (hashToken) {
+          localStorage.setItem("financeflow_token", hashToken);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      }
+
+      const search = window.location.search;
+      if (search && (search.includes("token=") || search.includes("access_token="))) {
+        const searchParams = new URLSearchParams(search);
+        const queryToken = searchParams.get("token") || searchParams.get("access_token");
+        if (queryToken) {
+          localStorage.setItem("financeflow_token", queryToken);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      }
+    }
+
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("financeflow_token")

@@ -21,23 +21,34 @@ class LoginRequest(BaseModel):
 class SignupRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=60)
     email: str = Field(..., min_length=3)
-    password: str = Field(..., min_length=6)
+    password: Optional[str] = Field(None, min_length=6)
     phone: Optional[str] = None
 
 
+class MagicLinkRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    name: Optional[str] = None
+    redirect_to: Optional[str] = None
+
+
 class SignupResponse(BaseModel):
-    status: str = "pending_otp"
+    status: str = "magic_link_sent"
     email: str
     message: str
-    expires_in_seconds: Optional[int] = 300
+    action_link: Optional[str] = None
+    expires_in_seconds: Optional[int] = 3600
     access_token: Optional[str] = None
     user: Optional[UserProfileResponse] = None
-
 
 
 class VerifyOtpRequest(BaseModel):
     email: str = Field(..., min_length=3)
     otp: str = Field(..., min_length=4, max_length=8)
+
+
+class ResendMagicLinkRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    redirect_to: Optional[str] = None
 
 
 class ResendOtpRequest(BaseModel):

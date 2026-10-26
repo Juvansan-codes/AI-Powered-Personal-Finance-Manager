@@ -224,6 +224,7 @@ export interface SignupResponse {
   status: string;
   email: string;
   message: string;
+  action_link?: string;
   expires_in_seconds?: number;
   access_token?: string;
   user?: AuthUser;
